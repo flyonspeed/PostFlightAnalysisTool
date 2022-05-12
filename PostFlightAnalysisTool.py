@@ -270,17 +270,18 @@ if __name__=='__main__':
     output_dir           = ""
     file_timestamp       = datetime.datetime.now().strftime("%Y%m%dT%H%M%S")
     
-    #test_data_dir        = "G:/.shortcut-targets-by-id/1JEHdf2zPb_F1R0v-s94Ia2RZNGjPCk2n/Flight Test Data/RV-4 Data/2022-05-08 Data/"
-    test_data_dir        = "C:/Users/bob/OneDrive/Documents/sandbox/FlyONSPEED/Flight Test Data/RV-4/2022-05-10 Data/"
-    v2_data_filename     = test_data_dir + "10 May 22 V2 Data/log_3.csv"
-    doc_data_filename    = test_data_dir + "10 May 22 Docs Box Data/log_5.csv"
+    test_data_dir        = "G:/.shortcut-targets-by-id/1JEHdf2zPb_F1R0v-s94Ia2RZNGjPCk2n/Flight Test Data/RV-4 Data/2022-05-11 Data/"
+    #test_data_dir        = "C:/Users/bob/OneDrive/Documents/sandbox/FlyONSPEED/Flight Test Data/RV-4/2022-05-10 Data/"
+    v2_data_filename     =  test_data_dir + "11 May 22 V2 Data/log_2.csv"
+    doc_data_filename    = (test_data_dir + "11 May 22 Docs Box Data/log_4.csv", \
+                            test_data_dir + "11 May 22 Docs Box Data/log_6.csv")
     efis_data_filename   = ""
     kml_data_filename    = ""
-    output_filename_root = test_data_dir + output_dir + "2022-05-10 - 2"
-    doc_time_correction  = 0.0
+    output_filename_root = test_data_dir + output_dir + "2022-05-11"
+    doc_time_correction  = (1.0, 1.0)
     efis_time_correction = 0.0
-    test_plot_center     = 46225
-    test_plot_span       = 50
+    test_plot_center     = 43000
+    test_plot_span       = 200
 
     merge_dataframe = merge_data_files(v2_data_filename, doc_data_filename, doc_time_correction, efis_data_filename, efis_time_correction, kml_data_filename)
 

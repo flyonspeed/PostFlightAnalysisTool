@@ -77,111 +77,136 @@ class Docs_File():
 # Utility routines for reading and parsing Docs data files
 # ---------------------------------------------------------------------------
 
-def make_dataframe(doc_filename, time_correction):
+def make_dataframe(doc_filenames, time_corrections):
     
     # Note: time correction is in seconds
-    
-    # Read the CSV file
-    # -----------------
 
-    doc_data_array = []
+    # A couple of lists to accumulate data
+    doc_data_array_master = []
+    index_time_master     = []
 
-    doc_file = Docs_File(doc_filename)
-    doc_reader = csv.DictReader(doc_file)
+    # Make sure these passed parameters are lists
+    if isinstance(doc_filenames, tuple):
+        doc_filenames_list = list(doc_filenames)
+    if isinstance(doc_filenames, str):
+        doc_filenames_list = [doc_filenames,]
 
-    doc_reader.__next__()
-    try:
-        for doc_row in doc_reader:
+    if isinstance(time_corrections, tuple):
+        time_corrections_list = list(time_corrections)
+    if isinstance(time_corrections, int) or isinstance(time_corrections, float):
+        time_corrections_list = [time_corrections,]
 
-            # Convert strings to numbers
-            if convert_doc_row(doc_row) == False:
-                print("Format error in {}, line {}".format(doc_filename, doc_reader.line_num))
-                continue
-                        
-            # Do some data fixes, OK if it throws an excepton
-            try:
-                # Try getting rid of the cycle timer part
-                (time_trimmed, cycle_counter) = doc_row["efisTime"].split(".")
-                doc_row["efisTime"] = time_trimmed
+    for file_idx in range(len(doc_filenames_list)):
 
-                # Take out columns we don't want for now
-                del doc_row["efisTAS"]
-                del doc_row["efisOAT"]
-                del doc_row["efisFuelRemaining"]
-                del doc_row["efisFuelFlow"]
-                del doc_row["efisMAP"]
-                del doc_row["efisRPM"]
-                del doc_row["efisPercentPower"]
-                del doc_row["efisMagHeading"]
-                del doc_row["efisAge"]
+        # Get the current file name and time correction
+        doc_filename    = doc_filenames_list[file_idx]
+        time_correction = time_corrections_list[file_idx]
 
-            except:
-                continue
+        # Read the CSV file
+        # -----------------
 
-            # We got to here so store the data                
-            doc_data_array.append(doc_row)
+        doc_data_array = []
 
-    # Catch any other read errors
-    except csv.Error as e:
-        sys.exit('file {}, line {}: {}'.format(doc_filename, doc_reader.line_num, e))
+        doc_file = Docs_File(doc_filename)
+        doc_reader = csv.DictReader(doc_file)
 
-
-    # Make a time index value for each row
-    # ------------------------------------
-
-    # Check the goodness of the timeStamp
-    #num_rows = len(doc_data_array)
-    #timestamp_span = int(doc_data_array[len(doc_data_array)-1]["docsTimeStamp"]) - \
-    #                 int(doc_data_array[0]                    ["docsTimeStamp"])
-    #if num_rows != (timestamp_span / 20) + 1:
-    #    print("Warning - non-continuous timestamps")
-
-    # Time in the middle of the file is probably good so make a reference from that
-    middle_index_ref     = int(len(doc_data_array) / 2)
-    mid_time_string_ref  = doc_data_array[middle_index_ref]["efisTime"]
-    (utc_hours_ref, utc_minutes_ref, utc_seconds_ref) = mid_time_string_ref.split(":")
-    
-    # Look for a line where the integer seconds increments.
-    for middle_index in range(middle_index_ref+1, middle_index_ref+100):
-        mid_time_string = doc_data_array[middle_index]["efisTime"]
-        (utc_hours, utc_minutes, utc_seconds) = mid_time_string.split(":")
-        if int(utc_seconds_ref) != int(utc_seconds):
-            break
-        
-    mid_timestamp  = int(doc_data_array[middle_index]["docsTimeStamp"])
-    mid_time_utc   = Utils.make_utc_from_str(mid_time_string)
-
-   # Make a UTC Time value to use as an index
-    array_idx = 0
-    index_time = []
-    while array_idx < len(doc_data_array):
+        doc_reader.__next__()
         try:
-            # Check for bad data
-            if doc_data_array[array_idx]["efisTime"] is None:
-                raise ValueError("Bad efisTime")
-            
-            # Make values for the data timestamp and UTC time
-            data_timestamp = int(doc_data_array[array_idx]["docsTimeStamp"])
-            
-            # Calculate and store a time index value which is milliseconds since midnight
-            data_time_utc = mid_time_utc + (data_timestamp - mid_timestamp)
-            data_time_utc += time_correction * 1000
-            data_time_utc = round(float(data_time_utc) / 20.0) * 20
-            index_time.append(data_time_utc)
+            for doc_row in doc_reader:
 
-            array_idx += 1
+                # Convert strings to numbers
+                if convert_doc_row(doc_row) == False:
+                    print("Format error in {}, line {}".format(doc_filename, doc_reader.line_num))
+                    continue
+                        
+                # Do some data fixes, OK if it throws an excepton
+                try:
+                    # Try getting rid of the cycle timer part
+                    (time_trimmed, cycle_counter) = doc_row["efisTime"].split(".")
+                    doc_row["efisTime"] = time_trimmed
 
-        except Exception as error:
-            print("Error '" + repr(error) + "' at line " + str(array_idx))
-            doc_data_array.pop(array_idx)
+                    # Take out columns we don't want for now
+                    del doc_row["efisTAS"]
+                    del doc_row["efisOAT"]
+                    del doc_row["efisFuelRemaining"]
+                    del doc_row["efisFuelFlow"]
+                    del doc_row["efisMAP"]
+                    del doc_row["efisRPM"]
+                    del doc_row["efisPercentPower"]
+                    del doc_row["efisMagHeading"]
+                    del doc_row["efisAge"]
+
+                except:
+                    continue
+
+                # We got to here so store the data                
+                doc_data_array.append(doc_row)
+
+        # Catch any other read errors
+        except csv.Error as e:
+            sys.exit('file {}, line {}: {}'.format(doc_filename, doc_reader.line_num, e))
+
+
+        # Make a time index value for each row
+        # ------------------------------------
+
+        # Check the goodness of the timeStamp
+        #num_rows = len(doc_data_array)
+        #timestamp_span = int(doc_data_array[len(doc_data_array)-1]["docsTimeStamp"]) - \
+        #                 int(doc_data_array[0]                    ["docsTimeStamp"])
+        #if num_rows != (timestamp_span / 20) + 1:
+        #    print("Warning - non-continuous timestamps")
+
+        # Time in the middle of the file is probably good so make a reference from that
+        middle_index_ref     = int(len(doc_data_array) / 2)
+        mid_time_string_ref  = doc_data_array[middle_index_ref]["efisTime"]
+        (utc_hours_ref, utc_minutes_ref, utc_seconds_ref) = mid_time_string_ref.split(":")
+    
+        # Look for a line where the integer seconds increments.
+        for middle_index in range(middle_index_ref+1, middle_index_ref+100):
+            mid_time_string = doc_data_array[middle_index]["efisTime"]
+            (utc_hours, utc_minutes, utc_seconds) = mid_time_string.split(":")
+            if int(utc_seconds_ref) != int(utc_seconds):
+                break
         
-    # Make a pandas dataframe of flight test data
-    # -------------------------------------------
-    doc_dataframe = pd.DataFrame(doc_data_array, index_time)
-#    doc_dataframe.columns = doc_column_names
+        mid_timestamp  = int(doc_data_array[middle_index]["docsTimeStamp"])
+        mid_time_utc   = Utils.make_utc_from_str(mid_time_string)
+
+        # Make a UTC Time value to use as an index
+        array_idx = 0
+        index_time = []
+        while array_idx < len(doc_data_array):
+            try:
+                # Check for bad data
+                if doc_data_array[array_idx]["efisTime"] is None:
+                    raise ValueError("Bad efisTime")
+            
+                # Make values for the data timestamp and UTC time
+                data_timestamp = int(doc_data_array[array_idx]["docsTimeStamp"])
+            
+                # Calculate and store a time index value which is milliseconds since midnight
+                data_time_utc  = mid_time_utc + (data_timestamp - mid_timestamp)
+                data_time_utc += time_correction * 1000
+                data_time_utc  = round(float(data_time_utc) / 20.0) * 20
+                index_time.append(data_time_utc)
+
+                array_idx += 1
+
+            except Exception as error:
+                print("Error '" + repr(error) + "' at line " + str(array_idx))
+                doc_data_array.pop(array_idx)
+        
+        doc_data_array_master += doc_data_array
+        index_time_master     += index_time
+
+
+    # Add data to a pandas dataframe of flight test data
+    # ---------------------------------------------------
+    doc_dataframe = pd.DataFrame(doc_data_array_master, index_time_master)
+    # doc_dataframe.columns = doc_column_names
     doc_dups = doc_dataframe.index.duplicated()
     doc_dataframe = doc_dataframe.loc[~doc_dups,:]
-        
+
     return doc_dataframe
 
 
@@ -204,7 +229,7 @@ def convert_doc_row(doc_row):
     except:
        print("Error converting '{}'".format(doc_key))
        success = False
-        
+
     return success
     
 # =============================================================================
@@ -213,9 +238,17 @@ if __name__=='__main__':
     doc__data_array = []
 
     print("Read Docs Data...")
-    docs_filename = "Data/Docs Box 11 Aug 21.csv"
-    doc_dataframe = make_dataframe(docs_filename, 0)
 
-#    print("Lines : {0}".format(efis_file.linenum))
+    test_data_dir        = "G:/.shortcut-targets-by-id/1JEHdf2zPb_F1R0v-s94Ia2RZNGjPCk2n/Flight Test Data/RV-4 Data/2022-05-11 Data/"
+
+    docs_filename    = (test_data_dir + "11 May 22 Docs Box Data/log_4.csv", \
+                        test_data_dir + "11 May 22 Docs Box Data/log_6.csv")
+    docs_correction  = (0.0, 0.0)
+
+    #docs_filename    = test_data_dir + "11 May 22 Docs Box Data/log_4.csv"
+    #docs_correction  = 0.0
+
+    doc_dataframe = make_dataframe(docs_filename, docs_correction)
+
     print("Done!")
     
