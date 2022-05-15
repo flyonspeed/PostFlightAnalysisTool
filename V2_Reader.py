@@ -25,6 +25,10 @@ class V2_File():
         {
         'Pitch_1':          'Pitch',
         'Roll_1':           'Roll',
+        'boomStatic':       'boomStaticRaw',
+        'boomDynamic':      'boomDynamicRaw',
+        'boomAlpha':        'boomAlphaRaw',
+        'boomBeta':         'boomBetaRaw',
         'AngularRateRoll':  'vnAngularRateRoll',
         'AngularRatePitch': 'vnAngularRatePitch',
         'AngularRateYaw':   'vnAngularRateYaw',
@@ -104,86 +108,114 @@ class V2_File():
 # V2 Data Routines
 # ---------------------------------------------------------------------------
 
-def make_dataframe(v2_filename):
+def make_dataframe(v2_filenames):
 
-    # Read the CSV file
-    # -----------------
+    # A couple of lists to accumulate data
+    v2_data_array_master = []
+    index_time_master    = []
 
-    v2_data_array = []
+    # Make sure the passed parameter is a list
+    if isinstance(v2_filenames, tuple):
+        v2_filenames_list = list(v2_filenames)
+    if isinstance(v2_filenames, str):
+        v2_filenames_list = [v2_filenames,]
 
-    v2_file = V2_File(v2_filename)
-    v2_reader = csv.DictReader(v2_file)
-    v2_reader.__next__()
+    # Fixup for datamarks
+    datamark_offset = 0
 
-    try:
-        for v2_row in v2_reader:
+    for file_idx in range(len(v2_filenames_list)):
+
+        # Get the current file name and time correction
+        v2_filename    = v2_filenames_list[file_idx]
+
+        # Read the CSV file
+        # -----------------
+
+        v2_data_array = []
+
+        v2_file = V2_File(v2_filename)
+        v2_reader = csv.DictReader(v2_file)
+        v2_reader.__next__()
+
+        try:
+            for v2_row in v2_reader:
                 
-            # Convert strings to numbers
-            if convert_v2_row(v2_row) == False:
-                print("Format error in {}, line {}".format(v2_filename, v2_reader.line_num))
-                continue
+                # Convert strings to numbers
+                if convert_v2_row(v2_row) == False:
+                    print("Format error in {}, line {}".format(v2_filename, v2_reader.line_num))
+                    continue
                 
-            # Try getting rid of the cycle timer part
-            try:
-                (time_trimmed, cycle_counter) = v2_row["vnTimeUTC"].split(".")
-                v2_row["vnTimeUTC"] = time_trimmed
-            except:
-                continue
+                # Try getting rid of the cycle timer part
+                try:
+                    (time_trimmed, cycle_counter) = v2_row["vnTimeUTC"].split(".")
+                    v2_row["vnTimeUTC"] = time_trimmed
+                except:
+                    continue
 
-            # Dont' store if GPS fix isn't good yet because time will be messed up
-            if v2_row["vnGPSFix"] == "0":
-                continue
+                # Dont' store if GPS fix isn't good yet because time will be messed up
+                if v2_row["vnGPSFix"] == "0":
+                    continue
 
-            # We got to here so store the data                
-            v2_data_array.append(v2_row)
+                # Fixup datamark
+                v2_row["DataMark"] += datamark_offset
 
-    # Catch any other read errors
-    except csv.Error as e:
-        sys.exit('file {}, line {}: {}'.format(v2_filename, v2_reader.line_num, e))
+                # We got to here so store the data                
+                v2_data_array.append(v2_row)
 
-    # Make a time index value for each row
-    # ------------------------------------
+        # Catch any other read errors
+        except csv.Error as e:
+            sys.exit('file {}, line {}: {}'.format(v2_filename, v2_reader.line_num, e))
 
-    # Check the goodness of the timeStamp
-    #num_rows = len(v2_data_array)
-    #timestamp_span = int(v2_data_array[len(v2_data_array)-1]["timeStamp"]) - \
-    #                 int(v2_data_array[0]                   ["timeStamp"])
-    #if num_rows != (timestamp_span / 20) + 1:
-    #    print("Warning - non-continuous timestamps")
+        # Make a time index value for each row
+        # ------------------------------------
+
+        # Check the goodness of the timeStamp
+        #num_rows = len(v2_data_array)
+        #timestamp_span = int(v2_data_array[len(v2_data_array)-1]["timeStamp"]) - \
+        #                 int(v2_data_array[0]                   ["timeStamp"])
+        #if num_rows != (timestamp_span / 20) + 1:
+        #    print("Warning - non-continuous timestamps")
     
-    # Time in the middle of the file is probably good so make a reference from that
-    middle_index_ref     = int(len(v2_data_array) / 2)
-    mid_time_string_ref  =     v2_data_array[middle_index_ref]["vnTimeUTC"]
-    (utc_hours_ref, utc_minutes_ref, utc_seconds_ref) = mid_time_string_ref.split(":")
+        # Time in the middle of the file is probably good so make a reference from that
+        middle_index_ref     = int(len(v2_data_array) / 2)
+        mid_time_string_ref  =     v2_data_array[middle_index_ref]["vnTimeUTC"]
+        (utc_hours_ref, utc_minutes_ref, utc_seconds_ref) = mid_time_string_ref.split(":")
     
-    # Look for a line where the integer seconds increments.
-    for middle_index in range(middle_index_ref+1, middle_index_ref+100):
-        mid_time_string  = v2_data_array[middle_index]["vnTimeUTC"]
-        (utc_hours, utc_minutes, utc_seconds) = mid_time_string.split(":")
-        if int(utc_seconds_ref) != int(utc_seconds):
-            break
+        # Look for a line where the integer seconds increments.
+        for middle_index in range(middle_index_ref+1, middle_index_ref+100):
+            mid_time_string  = v2_data_array[middle_index]["vnTimeUTC"]
+            (utc_hours, utc_minutes, utc_seconds) = mid_time_string.split(":")
+            if int(utc_seconds_ref) != int(utc_seconds):
+                break
         
-    mid_timestamp  = int(v2_data_array[middle_index]["timeStamp"])
-    mid_time_utc   = Utils.make_utc_from_str(mid_time_string)
+        mid_timestamp  = int(v2_data_array[middle_index]["timeStamp"])
+        mid_time_utc   = Utils.make_utc_from_str(mid_time_string)
 
-   # Make a UTC Time value to use as an index
-    array_idx = 0
-    index_time = []
-    while array_idx < len(v2_data_array):
-        # Make values for the data timestamp and UTC time
-        data_timestamp = int(v2_data_array[array_idx]["timeStamp"])
+        # Make a UTC Time value to use as an index
+        array_idx = 0
+        index_time = []
+        while array_idx < len(v2_data_array):
+            # Make values for the data timestamp and UTC time
+            data_timestamp = int(v2_data_array[array_idx]["timeStamp"])
 
-        # Calculate and store a time index value which is milliseconds since midnight
-        # Align time stamps on 20 millisecond values
-        data_time_utc  = mid_time_utc + (data_timestamp - mid_timestamp)
-        data_time_utc  = round(float(data_time_utc) / 20.0) * 20
-        index_time.append(data_time_utc)
+            # Calculate and store a time index value which is milliseconds since midnight
+            # Align time stamps on 20 millisecond values
+            data_time_utc  = mid_time_utc + (data_timestamp - mid_timestamp)
+            data_time_utc  = round(float(data_time_utc) / 20.0) * 20
+            index_time.append(data_time_utc)
 
-        array_idx += 1
+            array_idx += 1
+
+        # Append the new data to the end of the master data arrays
+        v2_data_array_master += v2_data_array
+        index_time_master    += index_time
+
+        # The last datamark value is the offset for the next file
+        datamark_offset = v2_row["DataMark"] + 1
 
     # Make a pandas dataframe of flight test data
     # -------------------------------------------
-    v2_dataframe = pd.DataFrame(v2_data_array, index_time)
+    v2_dataframe = pd.DataFrame(v2_data_array_master, index_time_master)
     v2_dups = v2_dataframe.index.duplicated()
     v2_dataframe = v2_dataframe.loc[~v2_dups,:]
 

@@ -196,9 +196,9 @@ def make_dataframe(doc_filenames, time_corrections):
                 print("Error '" + repr(error) + "' at line " + str(array_idx))
                 doc_data_array.pop(array_idx)
         
+        # Append the new data to the end of the master data arrays
         doc_data_array_master += doc_data_array
         index_time_master     += index_time
-
 
     # Add data to a pandas dataframe of flight test data
     # ---------------------------------------------------

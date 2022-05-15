@@ -50,13 +50,17 @@ def add_derived_cols(fdf):
         fdf["PRatio"] = (1 - (fdf["Palt"] / 145442)) ** 5.25586
         available_cols.append("PRatio")
 
-    # boomAlphaDer - 
-    # if ("" in available_cols) and ("P45" in available_cols):
-        # # BLANK
-        # fdf["boomAlphaDer"] = 1
-        # available_cols.append("boomAlphaDer")
+    # boomAlpha - Boom alpha in degrees
+    if ("boomAlphaRaw" in available_cols):
+        # =0.00000000000070918*V5^4-0.000000011698*V5^3+0.000070109*V5^2-0.21624*V5+310.21
+        fdf["boomAlpha"] = 0.00000000000070918 * np.power(fdf["boomAlphaRaw"], 4) - \
+                           0.000000011698      * np.power(fdf["boomAlphaRaw"], 3) + \
+                           0.000070109         * np.power(fdf["boomAlphaRaw"], 2) - \
+                           0.21624             *          fdf["boomAlphaRaw"]     + \
+                           310.21
+        available_cols.append("boomAlpha")
 
-    # BoomBetaDer - 
+    # boomBeta - Boom beta in degrees
     # if ("BoomBetaDer" in available_cols) and ("P45" in available_cols):
         # # BLANK
         # fdf["BoomBetaDer"] = 1

@@ -55,8 +55,10 @@ def plot_Pfwd(plot_center_sec, plot_span_sec):
     plot_end    = int(plot_center + (plot_span / 2))
     
     ts          = pd.Series(merge_dataframe.iloc[plot_start:plot_end].index).div(1000)
-    DynonPfwdSm = merge_dataframe.iloc[plot_start:plot_end]["PfwdSmoothed"]
-    AlSysPfwdSm = merge_dataframe.iloc[plot_start:plot_end]["docsPfwdSmoothed"]
+    DynonPfwdSm = merge_dataframe.iloc[plot_start:plot_end]["Pfwd"]
+    AlSysPfwdSm = merge_dataframe.iloc[plot_start:plot_end]["docsPfwd"]
+    #DynonPfwdSm = merge_dataframe.iloc[plot_start:plot_end]["PfwdSmoothed"]
+    #AlSysPfwdSm = merge_dataframe.iloc[plot_start:plot_end]["docsPfwdSmoothed"]
     
     AlSysPfwdSmDer = AlSysPfwdSm.mul(1.15).add(50)
     
@@ -164,14 +166,14 @@ def write_xplane(flt_dataframe, output_filename):
 # Main read and merge routines
 # -----------------------------------------------------------------------------
 
-def read_v2(data_filename):
-    v2_dataframe = V2_Reader.make_dataframe(data_filename)
+def read_v2(data_filenames):
+    v2_dataframe = V2_Reader.make_dataframe(data_filenames)
     return v2_dataframe
 
 # -----------------------------------------------------------------------------
 
-def read_docs(data_filename, time_correction):
-    docs_dataframe = Doc_Reader.make_dataframe(data_filename, time_correction)
+def read_docs(data_filenames, time_corrections):
+    docs_dataframe = Doc_Reader.make_dataframe(data_filenames, time_corrections)
     return docs_dataframe
 
 # -----------------------------------------------------------------------------
@@ -188,7 +190,7 @@ def read_kml(data_filename):
 
 # -----------------------------------------------------------------------------
 
-def merge_data_files(v2_data_filename, docs_data_filename, docs_time_correction, efis_data_filename, efis_time_correction, kml_data_filename):
+def merge_data_files(v2_data_filenames, docs_data_filenames, docs_time_corrections, efis_data_filename, efis_time_correction, kml_data_filename):
 
     v2_dataframe   = pd.DataFrame()
     docs_dataframe = pd.DataFrame()
@@ -197,16 +199,18 @@ def merge_data_files(v2_data_filename, docs_data_filename, docs_time_correction,
     flt_dataframe  = pd.DataFrame()
 
     # Read the various data files
-    if (v2_data_filename != None) and (v2_data_filename != ""):
+    if (v2_data_filenames != None) and (v2_data_filenames != ""):
         print_log("Read V2...")
-        v2_dataframe = read_v2(v2_data_filename)
+        v2_dataframe = read_v2(v2_data_filenames)
 
-    if (docs_data_filename != None) and (docs_data_filename != ""):
+    if (docs_data_filenames != None) and (docs_data_filenames != ""):
         print_log("Read Docs...")
-        docs_dataframe = read_docs(docs_data_filename, docs_time_correction)
+        docs_dataframe = read_docs(docs_data_filenames, docs_time_corrections)
+
     if (efis_data_filename != None) and (efis_data_filename != ""):
         print_log("Read EFIS...")
         efis_dataframe = read_efis(efis_data_filename, efis_time_correction)
+
     if (kml_data_filename != None) and (kml_data_filename != ""):
         print_log("Read KML...")
         kml_dataframe = read_kml(kml_data_filename)
@@ -241,16 +245,6 @@ def merge_data_files(v2_data_filename, docs_data_filename, docs_time_correction,
         print_log("Add derived data columns...")
         flt_dataframe = Derived_Data.add_derived_cols(flt_dataframe)
 
-        #print_log("Add ground speed and ground track...")
-        #gs_series = ((v2_dataframe["vnGnssVelNedNorth"] * v2_dataframe["vnGnssVelNedNorth"]) + \
-        #             (v2_dataframe["vnGnssVelNedEast"]  * v2_dataframe["vnGnssVelNedEast"] )).apply(math.sqrt) * 1.9438
-        #gs_series.name="dvnGndSpeed"
-        #flt_dataframe = flt_dataframe.join(gs_series)
-    
-        #gt_series = (np.arctan2(v2_dataframe["vnGnssVelNedEast"], v2_dataframe["vnGnssVelNedNorth"]) * 180.0 / 3.1416).mod(360)
-        #gt_series.name="dvnGndTrack"
-        #flt_dataframe = flt_dataframe.join(gt_series)
-
     print_log("Done")
     return flt_dataframe
 
@@ -270,18 +264,22 @@ if __name__=='__main__':
     output_dir           = ""
     file_timestamp       = datetime.datetime.now().strftime("%Y%m%dT%H%M%S")
     
-    test_data_dir        = "G:/.shortcut-targets-by-id/1JEHdf2zPb_F1R0v-s94Ia2RZNGjPCk2n/Flight Test Data/RV-4 Data/2022-05-11 Data/"
-    #test_data_dir        = "C:/Users/bob/OneDrive/Documents/sandbox/FlyONSPEED/Flight Test Data/RV-4/2022-05-10 Data/"
-    v2_data_filename     =  test_data_dir + "11 May 22 V2 Data/log_2.csv"
-    doc_data_filename    = (test_data_dir + "11 May 22 Docs Box Data/log_4.csv", \
-                            test_data_dir + "11 May 22 Docs Box Data/log_6.csv")
+    #test_data_dir        = "G:/.shortcut-targets-by-id/1JEHdf2zPb_F1R0v-s94Ia2RZNGjPCk2n/Flight Test Data/RV-4 Data/2022-05-13 Data/"
+    test_data_dir        = "C:/Users/bob/OneDrive/Documents/sandbox/FlyONSPEED/Flight Test Data/RV-4/2022-05-13 Data/"
+    v2_data_filename     = (test_data_dir + "13 May 22 V2 Data/log_2.csv", \
+                            test_data_dir + "13 May 22 V2 Data/log_3.csv", \
+                            test_data_dir + "13 May 22 V2 Data/log_4.csv")
+    doc_data_filename    = (test_data_dir + "13 May 22 Docs Box Data/log_3.csv", \
+                            test_data_dir + "13 May 22 Docs Box Data/log_4.csv", \
+                            test_data_dir + "13 May 22 Docs Box Data/log_5.csv", \
+                            test_data_dir + "13 May 22 Docs Box Data/log_6.csv")
     efis_data_filename   = ""
     kml_data_filename    = ""
-    output_filename_root = test_data_dir + output_dir + "2022-05-11"
-    doc_time_correction  = (1.0, 1.0)
+    output_filename_root = test_data_dir + output_dir + "2022-05-13"
+    doc_time_correction  = (2.0, 2.1, 2.1, 2.1)
     efis_time_correction = 0.0
     test_plot_center     = 43000
-    test_plot_span       = 200
+    test_plot_span       = 4000
 
     merge_dataframe = merge_data_files(v2_data_filename, doc_data_filename, doc_time_correction, efis_data_filename, efis_time_correction, kml_data_filename)
 
