@@ -14,6 +14,9 @@ import Alpha_Beta_Filter as abf
 
 def add_derived_cols(fdf):
 
+    # Catch harmless warnings so they won't print
+    # numpy.seterr(all='warn')
+
     available_cols = fdf.columns.values.tolist()
     data_sample_period = 1.0 / 50.0 # 50 Hz
 
@@ -183,7 +186,10 @@ def add_derived_cols(fdf):
     # vnFltPth - VN Flight Path Angle (deg) 
     if ("vnVelNedDown" in available_cols) and ("TASMS" in available_cols):
         # =ASIN(-AG2/DO2)*180/PI()
+        # Ignore harmless warnings so they won't print
+        np.seterr(all='ignore')
         fdf["vnFltPth"] =  np.arcsin(-fdf["vnVelNedDown"]/fdf["TASMS"]) * 180 / 3.1416
+        np.seterr(all='print')
         available_cols.append("vnFltPth")
 
     # vnIVVI - VN IVVI (FPM) 
@@ -402,5 +408,9 @@ def add_derived_cols(fdf):
         # =EH2-EO2
         fdf["efisStallMarCASG"] = fdf["efisCAS"] - fdf["efisCASVsG"]
         available_cols.append("efisStallMarCASG")
+
+    # Print warnings so we can see them happen and fix them
+    # numpy.seterr(all='warn')
+
 
     return fdf
