@@ -24,20 +24,17 @@ import matplotlib.pyplot as plt
 import V2_Reader
 import Doc_Reader
 import EFIS_Reader
+import Garmin_Reader
 import KML_Reader
 import XPlane_Write
 import Derived_Data
+import Utils as u
 
-v2_dataframe   = None
-docs_dataframe = None
-efis_dataframe = None
-kml_dataframe  = None
-
-print_log = print
-
-def set_logger(new_print_log):
-    print_log = new_print_log
-
+v2_dataframe     = None
+docs_dataframe   = None
+efis_dataframe   = None
+garmin_dataframe = None
+kml_dataframe    = None
 
 # ---------------------------------------------------------------------------
 # Plot routines
@@ -47,18 +44,24 @@ def set_logger(new_print_log):
 
 def plot_Pfwd(plot_center_sec, plot_span_sec):
     
-    print("  Get plot data ...")
+    # print("  Get plot data ...")
 
-    plot_center = merge_dataframe.index.get_loc(plot_center_sec*1000,method='nearest')
+    plot_center_msec = plot_center_sec * 1000
+    # plot_center = merge_dataframe.index.get_loc(plot_center_msec,method='nearest')
+    plot_center = merge_dataframe.index.get_indexer([plot_center_msec], method='nearest')
     plot_span   = plot_span_sec * 50
     plot_start  = int(plot_center - (plot_span / 2))
+    if plot_start < 0:
+        plot_start = 0
     plot_end    = int(plot_center + (plot_span / 2))
-    
+    if plot_end >= len(merge_dataframe):
+        plot_end = len(merge_dataframe) - 1
+
     ts          = pd.Series(merge_dataframe.iloc[plot_start:plot_end].index).div(1000)
-    DynonPfwdSm = merge_dataframe.iloc[plot_start:plot_end]["Pfwd"]
-    AlSysPfwdSm = merge_dataframe.iloc[plot_start:plot_end]["docsPfwd"]
-    #DynonPfwdSm = merge_dataframe.iloc[plot_start:plot_end]["PfwdSmoothed"]
-    #AlSysPfwdSm = merge_dataframe.iloc[plot_start:plot_end]["docsPfwdSmoothed"]
+    #DynonPfwdSm = merge_dataframe.iloc[plot_start:plot_end]["Pfwd"]
+    #AlSysPfwdSm = merge_dataframe.iloc[plot_start:plot_end]["docsPfwd"]
+    DynonPfwdSm = merge_dataframe.iloc[plot_start:plot_end]["PfwdSmoothed"]
+    AlSysPfwdSm = merge_dataframe.iloc[plot_start:plot_end]["docsPfwdSmoothed"]
     
     AlSysPfwdSmDer = AlSysPfwdSm.mul(1.15).add(50)
     
@@ -180,7 +183,13 @@ def read_docs(data_filenames, time_corrections):
 
 def read_efis(data_filename, time_correction):
     efis_dataframe = EFIS_Reader.make_dataframe(data_filename, time_correction)
-    return docs_dataframe
+    return efis_dataframe
+
+# -----------------------------------------------------------------------------
+
+def read_garmin(data_filename, time_correction):
+    garmin_dataframe = Garmin_Reader.make_dataframe(data_filename, time_correction)
+    return garmin_dataframe
 
 # -----------------------------------------------------------------------------
 
@@ -190,32 +199,37 @@ def read_kml(data_filename):
 
 # -----------------------------------------------------------------------------
 
-def merge_data_files(v2_data_filenames, docs_data_filenames, docs_time_corrections, efis_data_filename, efis_time_correction, kml_data_filename):
+def merge_data_files(v2_data_filenames, docs_data_filenames, docs_time_corrections, efis_data_filename, efis_time_correction, garmin_data_filename, garmin_time_correction, kml_data_filename):
 
-    v2_dataframe   = pd.DataFrame()
-    docs_dataframe = pd.DataFrame()
-    efis_dataframe = pd.DataFrame()
-    kml_dataframe  = pd.DataFrame()
-    flt_dataframe  = pd.DataFrame()
+    v2_dataframe     = pd.DataFrame()
+    docs_dataframe   = pd.DataFrame()
+    efis_dataframe   = pd.DataFrame()
+    garmin_dataframe = pd.DataFrame()
+    kml_dataframe    = pd.DataFrame()
+    flt_dataframe    = pd.DataFrame()
 
     # Read the various data files
     if (v2_data_filenames != None) and (v2_data_filenames != ""):
-        print_log("Read V2...")
+        u.print_log("Read V2...")
         v2_dataframe = read_v2(v2_data_filenames)
 
     if (docs_data_filenames != None) and (docs_data_filenames != ""):
-        print_log("Read Docs...")
+        u.print_log("Read Docs...")
         docs_dataframe = read_docs(docs_data_filenames, docs_time_corrections)
 
     if (efis_data_filename != None) and (efis_data_filename != ""):
-        print_log("Read EFIS...")
+        u.print_log("Read EFIS...")
         efis_dataframe = read_efis(efis_data_filename, efis_time_correction)
 
+    if (garmin_data_filename != None) and (garmin_data_filename != ""):
+        u.print_log("Read Garmin...")
+        garmin_dataframe = read_garmin(garmin_data_filename, garmin_time_correction)
+
     if (kml_data_filename != None) and (kml_data_filename != ""):
-        print_log("Read KML...")
+        u.print_log("Read KML...")
         kml_dataframe = read_kml(kml_data_filename)
 
-    print_log("Merge...")
+    u.print_log("Merge...")
     if v2_dataframe.empty == False:
         if flt_dataframe.empty:
             flt_dataframe = v2_dataframe
@@ -234,18 +248,24 @@ def merge_data_files(v2_data_filenames, docs_data_filenames, docs_time_correctio
         else:
             flt_dataframe = flt_dataframe.merge(efis_dataframe, how='left', left_index=True, right_index=True)
 
+    if garmin_dataframe.empty == False:
+        if flt_dataframe.empty:
+            flt_dataframe = garmin_dataframe
+        else:
+            flt_dataframe = flt_dataframe.merge(garmin_dataframe, how='left', left_index=True, right_index=True)
+
     if kml_dataframe.empty == False:
         if flt_dataframe.empty:
             flt_dataframe = kml_dataframe
         else:
             flt_dataframe = flt_dataframe.merge(kml_dataframe, how='left', left_index=True, right_index=True)
 
-    # Add ground speed and ground track
+    # Add data columns derived from existing columns
     if v2_dataframe.empty == False:
-        print_log("Add derived data columns...")
+        u.print_log("Add derived data columns...")
         flt_dataframe = Derived_Data.add_derived_cols(flt_dataframe)
 
-    print_log("Done")
+    u.print_log("Done")
     return flt_dataframe
 
 
@@ -256,32 +276,40 @@ def merge_data_files(v2_data_filenames, docs_data_filenames, docs_time_correctio
 if __name__=='__main__':
 
     # Choose what to do with the data
-    make_csv        = False
-    make_excel      = True
-    make_plot       = False
+    if False :
+        make_csv        = True
+        make_excel      = False
+        make_plot       = False
+    else :
+        make_csv        = False
+        make_excel      = True
+        make_plot       = False
 
     # Load aircraft data files
     output_dir           = ""
     file_timestamp       = datetime.datetime.now().strftime("%Y%m%dT%H%M%S")
     
-    #test_data_dir        = "G:/.shortcut-targets-by-id/1JEHdf2zPb_F1R0v-s94Ia2RZNGjPCk2n/Flight Test Data/RV-4 Data/2022-05-13 Data/"
-    test_data_dir        = "C:/Users/bob/OneDrive/Documents/sandbox/FlyONSPEED/Flight Test Data/RV-4/2022-05-13 Data/"
-    v2_data_filename     = (test_data_dir + "13 May 22 V2 Data/log_2.csv", \
-                            test_data_dir + "13 May 22 V2 Data/log_3.csv", \
-                            test_data_dir + "13 May 22 V2 Data/log_4.csv")
-    doc_data_filename    = (test_data_dir + "13 May 22 Docs Box Data/log_3.csv", \
-                            test_data_dir + "13 May 22 Docs Box Data/log_4.csv", \
-                            test_data_dir + "13 May 22 Docs Box Data/log_5.csv", \
-                            test_data_dir + "13 May 22 Docs Box Data/log_6.csv")
-    efis_data_filename   = ""
-    kml_data_filename    = ""
-    output_filename_root = test_data_dir + output_dir + "2022-05-13"
-    doc_time_correction  = (2.0, 2.1, 2.1, 2.1)
-    efis_time_correction = 0.0
-    test_plot_center     = 43000
-    test_plot_span       = 4000
+    #test_data_dir          = "G:/.shortcut-targets-by-id/1JEHdf2zPb_F1R0v-s94Ia2RZNGjPCk2n/Flight Test Data/RV-4 Data/2022-05-28 Data/"
+    test_data_dir          = "C:/Users/bob/OneDrive/Documents/sandbox/FlyONSPEED/Flight Test Data/RV-8 Data/RV8Data2Jun22/"
+    v2_data_filename       = (test_data_dir + "log_108.csv")
+    #doc_data_filename      = (test_data_dir + "28 May 22 Docs Box Data/log_3.csv", \
+    #                          test_data_dir + "28 May 22 Docs Box Data/log_4.csv")
+    doc_data_filename      = ("")
+    efis_data_filename     = ""
+    garmin_data_filename   = test_data_dir + "log_20220602_172202_KTEW.csv"
+    kml_data_filename      = ""
+    output_filename_root   = test_data_dir + output_dir + "2022-05-2"
+    doc_time_correction    = (0.0, 0.5)
+    efis_time_correction   = 0.0
+    garmin_time_correction = 0.0
+    #test_plot_center       = 43000
+    #test_plot_span         = 4000
 
-    merge_dataframe = merge_data_files(v2_data_filename, doc_data_filename, doc_time_correction, efis_data_filename, efis_time_correction, kml_data_filename)
+    merge_dataframe = merge_data_files(v2_data_filename,                             \
+                                       doc_data_filename,    doc_time_correction,    \
+                                       efis_data_filename,   efis_time_correction,   \
+                                       garmin_data_filename, garmin_time_correction, \
+                                       kml_data_filename)
 
     # Outputs
     # -------
@@ -307,8 +335,10 @@ if __name__=='__main__':
         write_excel(merge_dataframe, output_filename)
         
     if make_plot == True:
-        print("Data Time Span {0} to {1}".format(merge_dataframe.index[0], merge_dataframe.index[-1]))
+        u.print_log("Data Time Span {0} to {1}".format(merge_dataframe.index[0], merge_dataframe.index[-1]))
         print("Plot ...")
+        test_plot_center = int((merge_dataframe.index[-1] + merge_dataframe.index[0]) / (2 * 1000))
+        test_plot_span   = int((merge_dataframe.index[-1] - merge_dataframe.index[0]) / 1000)
         plot_Pfwd(test_plot_center, test_plot_span)
 
     print("Done!")
