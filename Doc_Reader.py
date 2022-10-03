@@ -2,6 +2,7 @@
 """
 Created on Sat Sep  4 20:44:28 2021
 """
+import os
 
 import csv
 import datetime
@@ -77,7 +78,7 @@ class Docs_File():
 # Utility routines for reading and parsing Docs data files
 # ---------------------------------------------------------------------------
 
-def make_dataframe(doc_filenames, time_corrections):
+def make_dataframe(doc_filenames):
     
     # Note: time correction is in seconds
 
@@ -86,21 +87,20 @@ def make_dataframe(doc_filenames, time_corrections):
     index_time_master     = []
 
     # Make sure these passed parameters are lists
-    if isinstance(doc_filenames, tuple):
-        doc_filenames_list = list(doc_filenames)
-    if isinstance(doc_filenames, str):
-        doc_filenames_list = [doc_filenames,]
+    #if isinstance(doc_filenames, tuple):
+    doc_filenames_list = list(doc_filenames)
+    #if isinstance(doc_filenames, str):
+    #    doc_filenames_list = [doc_filenames,]
 
-    if isinstance(time_corrections, tuple):
-        time_corrections_list = list(time_corrections)
-    if isinstance(time_corrections, int) or isinstance(time_corrections, float):
-        time_corrections_list = [time_corrections,]
+    #if isinstance(time_corrections, tuple):
+    #    time_corrections_list = list(time_corrections)
+    #if isinstance(time_corrections, int) or isinstance(time_corrections, float):
+    #    time_corrections_list = [time_corrections,]
 
     for file_idx in range(len(doc_filenames_list)):
 
         # Get the current file name and time correction
-        doc_filename    = doc_filenames_list[file_idx]
-        time_correction = time_corrections_list[file_idx]
+        (doc_filename, time_correction) = doc_filenames_list[file_idx]
 
         # Read the CSV file
         # -----------------
@@ -116,7 +116,7 @@ def make_dataframe(doc_filenames, time_corrections):
 
                 # Convert strings to numbers
                 if convert_doc_row(doc_row) == False:
-                    print("Format error in {}, line {}".format(doc_filename, doc_reader.line_num))
+                    print("Format error in {}, line {}".format(os.path.basename(doc_filename), doc_reader.line_num))
                     continue
                         
                 # Do some data fixes, OK if it throws an excepton
@@ -144,7 +144,7 @@ def make_dataframe(doc_filenames, time_corrections):
 
         # Catch any other read errors
         except csv.Error as e:
-            sys.exit('file {}, line {}: {}'.format(doc_filename, doc_reader.line_num, e))
+            sys.exit('file {}, line {}: {}'.format(os.path.basename(doc_filename), doc_reader.line_num, e))
 
 
         # Make a time index value for each row
