@@ -6,6 +6,7 @@ Created on Wed Sep  8 14:19:13 2021
 """
 
 import sys
+import os
 
 import csv
 import datetime
@@ -110,6 +111,8 @@ class V2_File():
 
 def make_dataframe(v2_filenames):
 
+    past_convert_error = False
+
     # A couple of lists to accumulate data
     v2_data_array_master = []
     index_time_master    = []
@@ -120,10 +123,8 @@ def make_dataframe(v2_filenames):
     if isinstance(v2_filenames, str):
         v2_filenames_list = [v2_filenames,]
 
-    # Fixup for datamarks
-    datamark_offset = 0
-
-    for file_idx in range(len(v2_filenames_list)):
+    num_v2_files = len(v2_filenames_list)
+    for file_idx in range(num_v2_files):
 
         # Get the current file name and time correction
         v2_filename    = v2_filenames_list[file_idx]
@@ -142,9 +143,15 @@ def make_dataframe(v2_filenames):
                 
                 # Convert strings to numbers
                 if convert_v2_row(v2_row) == False:
-                    print("Format error in {}, line {}".format(v2_filename, v2_reader.line_num))
+                    if past_convert_error == False:
+                        print("Format error in {} starting line {}".format(os.path.basename(v2_filename), v2_reader.line_num))
+                    past_convert_error = True
                     continue
-                
+                else:
+                    if past_convert_error == True:
+                        print("Format error in {} endinging line {}".format(os.path.basename(v2_filename), v2_reader.line_num))
+                    past_convert_error = False
+
                 # Try getting rid of the cycle timer part
                 try:
                     (time_trimmed, cycle_counter) = v2_row["vnTimeUTC"].split(".")
@@ -157,14 +164,14 @@ def make_dataframe(v2_filenames):
                     continue
 
                 # Fixup datamark
-                v2_row["DataMark"] += datamark_offset
+                # v2_row["DataMark"] += datamark_offset
 
                 # We got to here so store the data                
                 v2_data_array.append(v2_row)
 
         # Catch any other read errors
         except csv.Error as e:
-            sys.exit('file {}, line {}: {}'.format(v2_filename, v2_reader.line_num, e))
+            sys.exit('file {}, line {}: {}'.format(os.path.basename(v2_filename), v2_reader.line_num, e))
 
         # Make a time index value for each row
         # ------------------------------------
@@ -211,7 +218,7 @@ def make_dataframe(v2_filenames):
         index_time_master    += index_time
 
         # The last datamark value is the offset for the next file
-        datamark_offset = v2_row["DataMark"] + 1
+        #datamark_offset = v2_row["DataMark"] + 1
 
     # Make a pandas dataframe of flight test data
     # -------------------------------------------
@@ -244,7 +251,7 @@ def convert_v2_row(v2_row):
                 v2_row[v2_key] = float(v2_row[v2_key])
 
     except:
-        print("Error converting ")
+#        print("Error converting ")
         success = False
             
     return success

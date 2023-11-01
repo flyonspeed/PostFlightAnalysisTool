@@ -8,15 +8,17 @@ Created on Wed Mar 11 2020
 # pip install numpy
 # pip install pandas
 # pip install matplotlib
-# pip install xlsxwriter
+# pip install openpyxl or pip install xlsxwriter
 
 
 # Someday look at seaborn
 # http://seaborn.pydata.org/index.html
 
+from msvcrt import kbhit
 import os
 import math
 import datetime
+import msvcrt
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -285,82 +287,126 @@ if __name__=='__main__':
     file_timestamp       = datetime.datetime.now().strftime("%Y%m%dT%H%M%S")
     
     if True :
-        test_data_dir          = "G:/.shortcut-targets-by-id/1JEHdf2zPb_F1R0v-s94Ia2RZNGjPCk2n/Flight Test Data/RV-4 Data/2022-08-30 Data/"
-        v2_data_filename       = (test_data_dir + "30 Aug 22 V2 Data/log_3.csv" )
-        doc_data_filenames     = ( \
-                                  (test_data_dir + "30 Aug 22 Docs Data/log_4.csv", 3.5), \
-                                  (test_data_dir + "30 Aug 22 Docs Data/log_5.csv", 0.0),  \
-                                  (test_data_dir + "30 Aug 22 Docs Data/log_6.csv", 0.0),  \
+        test_data_dir          = "G:/.shortcut-targets-by-id/1JEHdf2zPb_F1R0v-s94Ia2RZNGjPCk2n/Flight Test Data/RV-4 Data/2023-10-29/"
+        output_filename_root   = test_data_dir + output_dir + "2023-10-29"
+        v2_data_dir            = "29 Oct 23 Cockpit Data/"
+        docs_data_dir          = "29 Oct 23 Docs Data/"
+        v2_data_filenames      = (test_data_dir + v2_data_dir + "log_4.csv") 
+        docs_data_filenames    = ( \
+                                  (test_data_dir + docs_data_dir + "log_4.csv", 1.0), \
                                   )
         efis_data_filename     = ""
         garmin_data_filename   = ""
         kml_data_filename      = ""
-        output_filename_root   = test_data_dir + output_dir + "2022-08-29 - 3"
-        doc_time_correction    = (0.0, 0.0)
         efis_time_correction   = 0.0
         garmin_time_correction = 0.0
     else :
-        test_data_dir          = "C:/Users/bob/OneDrive/Documents/sandbox/FlyONSPEED/Flight Test Data/RV-8 Data/RV8Data2Jun22/"
-        v2_data_filename       = (test_data_dir + "log_108.csv")
-        #doc_data_filename      = (test_data_dir + "28 May 22 Docs Box Data/log_3.csv", \
-        #                          test_data_dir + "28 May 22 Docs Box Data/log_4.csv")
-        doc_data_filename      = ("")
+        test_data_dir          = "C:/Users/bob/OneDrive/Documents/sandbox/FlyONSPEED/Flight Test Data/RV-4/2022-05-10 Data/"
+        v2_data_filenames      = (test_data_dir + "10 May 22 V2 Data/log_2.csv")
+        docs_data_filenames    = ( \
+                                  (test_data_dir + "10 May 22 Docs Data/log_3.csv", 0.0), \
+                                  (test_data_dir + "10 May 22 Docs Data/log_4.csv", 0.0), \
+                                  (test_data_dir + "10 May 22 Docs Data/log_5.csv", 0.0), \
+                                  )
         efis_data_filename     = ""
-        garmin_data_filename   = test_data_dir + "log_20220602_172202_KTEW.csv"
+        garmin_data_filename   = "" # test_data_dir + "log_20220602_172202_KTEW.csv"
         kml_data_filename      = ""
-        output_filename_root   = test_data_dir + output_dir + "2022-05-2"
-        doc_time_correction    = (0.0, 0.5)
+        output_filename_root   = test_data_dir + output_dir + "2022-05-10"
         efis_time_correction   = 0.0
         garmin_time_correction = 0.0
 
     #test_plot_center       = 43000
     #test_plot_span         = 4000
 
-    merge_dataframe = merge_data_files(v2_data_filename,                             \
-                                       doc_data_filenames,                           \
-                                       efis_data_filename,   efis_time_correction,   \
-                                       garmin_data_filename, garmin_time_correction, \
-                                       kml_data_filename)
+    #merge_dataframe = merge_data_files(v2_data_filename,                             \
+    #                                   doc_data_filenames,                           \
+    #                                   efis_data_filename,   efis_time_correction,   \
+    #                                   garmin_data_filename, garmin_time_correction, \
+    #                                   kml_data_filename)
+
+    # Read the various data files
+    v2_dataframe     = pd.DataFrame()
+    docs_dataframe   = pd.DataFrame()
+    # merge_dataframe  = pd.DataFrame()
+
+    if (v2_data_filenames != None) and (v2_data_filenames != ""):
+        u.print_log("Read V2...")
+        v2_dataframe = read_v2(v2_data_filenames)
+
+    if (docs_data_filenames != None) and (docs_data_filenames != ""):
+        u.print_log("Read Docs...")
+        docs_dataframe = read_docs(docs_data_filenames)
+
 
     # Outputs
     # -------
+    make_plot = False
+    while True:
+        print("p - Plot")
+        print("e - Excel")
+        print("q - Quit")
 
-    # Write the big master CSV
-    if make_csv == True:
-        # Make sure the output folder exists
-        if not os.path.exists(test_data_dir + output_dir):
-            os.makedirs(test_data_dir + output_dir)
-            
-        output_filename = output_filename_root + " - Merged " + file_timestamp + ".csv"
-        print("Write " + os.path.basename(output_filename) + " ...")
-        write_csv(merge_dataframe, output_filename)
+        input = str(msvcrt.getch().decode('utf-8'))
 
-    if make_excel == True:
-        # Make sure the output folder exists
-        if not os.path.exists(test_data_dir + output_dir):
-            os.makedirs(test_data_dir + output_dir)
+        if input == 'q':
+            break
+
+        # Merge the various data frames
+        u.print_log("Merge...")
+        merge_dataframe  = pd.DataFrame()
+
+        if v2_dataframe.empty == False:
+            if merge_dataframe.empty:
+                merge_dataframe = v2_dataframe
+            else:
+                merge_dataframe = merge_dataframe.merge(v2_dataframe, how='left', left_index=True, right_index=True)
+
+        if docs_dataframe.empty == False:
+            if merge_dataframe.empty:
+                merge_dataframe = docs_dataframe
+            else:
+                merge_dataframe = merge_dataframe.merge(docs_dataframe, how='left', left_index=True, right_index=True)
+
+        if v2_dataframe.empty == False:
+#            u.print_log("Add derived data columns...")
+            merge_dataframe = Derived_Data.add_derived_cols(merge_dataframe)
+
+        # Write the big master CSV
+        if (make_csv == True) or (input == 'c'):
+            # Make sure the output folder exists
+            if not os.path.exists(test_data_dir + output_dir):
+                os.makedirs(test_data_dir + output_dir)
             
-        # Write the individual datamark Excel tabs
-        output_filename = output_filename_root + " - Merged " + file_timestamp + ".xlsx"
-        print("Write " + os.path.basename(output_filename) + " ...")
-        write_excel(merge_dataframe, output_filename)
-        
-    if make_xplane == True:
-        # Make sure the output folder exists
-        if not os.path.exists(test_data_dir + output_dir):
-            os.makedirs(test_data_dir + output_dir)
+            output_filename = output_filename_root + " - Merged " + file_timestamp + ".csv"
+            print("Write " + os.path.basename(output_filename) + " ...")
+            write_csv(merge_dataframe, output_filename)
+
+        if (make_excel == True) or (input == 'e'):
+            # Make sure the output folder exists
+            if not os.path.exists(test_data_dir + output_dir):
+                os.makedirs(test_data_dir + output_dir)
             
-        # Write the individual datamark Excel tabs
-        output_filename = output_filename_root + "XPlane " + file_timestamp + ".fdr"
-        print("Write " + os.path.basename(output_filename) + " ...")
-#        write_xplane(merge_dataframe, output_filename)
-        write_xplane(merge_dataframe.loc[44070360:44174860], output_filename)
+            # Write the individual datamark Excel tabs
+            output_filename = output_filename_root + " - Merged " + file_timestamp + ".xlsx"
+            print("Write " + os.path.basename(output_filename) + " ...")
+            write_excel(merge_dataframe, output_filename)
         
-    if make_plot == True:
-        u.print_log("Data Time Span {0} to {1}".format(merge_dataframe.index[0], merge_dataframe.index[-1]))
-        print("Plot ...")
-        test_plot_center = int((merge_dataframe.index[-1] + merge_dataframe.index[0]) / (2 * 1000))
-        test_plot_span   = int((merge_dataframe.index[-1] - merge_dataframe.index[0]) / 1000)
-        plot_Pfwd(test_plot_center, test_plot_span)
+        if (make_xplane == True) or (input == 'x'):
+            # Make sure the output folder exists
+            if not os.path.exists(test_data_dir + output_dir):
+                os.makedirs(test_data_dir + output_dir)
+            
+            # Write the individual datamark Excel tabs
+            output_filename = output_filename_root + "XPlane " + file_timestamp + ".fdr"
+            print("Write " + os.path.basename(output_filename) + " ...")
+    #        write_xplane(merge_dataframe, output_filename)
+            write_xplane(merge_dataframe.loc[44070360:44174860], output_filename)
+        
+        if (make_plot == True) or (input == 'p'):
+            u.print_log("Data Time Span {0} to {1}".format(merge_dataframe.index[0], merge_dataframe.index[-1]))
+            print("Plot ...")
+            test_plot_center = int((merge_dataframe.index[-1] + merge_dataframe.index[0]) / (2 * 1000))
+            test_plot_span   = int((merge_dataframe.index[-1] - merge_dataframe.index[0]) / 1000)
+            plot_Pfwd(test_plot_center, test_plot_span)
 
     print("Done!")

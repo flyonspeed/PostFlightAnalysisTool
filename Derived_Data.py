@@ -20,11 +20,11 @@ def add_derived_cols(fdf):
     available_cols = fdf.columns.values.tolist()
     data_sample_period = 1.0 / 50.0 # 50 Hz
 
-    # KTAS - TAS Knots
-    if ("IAS" in available_cols) and ("Palt" in available_cols):
+    # TAS - TAS Knots
+    if (("IAS" in available_cols) and ("Palt" in available_cols)) and not ("TAS" in available_cols):
         # =I2*(1+(H2/1000*0.017))
-        fdf["KTAS"] = fdf["IAS"] * (1 + (fdf["Palt"] / 1000 * 0.017)) # MAKE SURE THIS IS RIGHT ()
-        available_cols.append("KTAS")
+        fdf["TAS"] = fdf["IAS"] * (1 + (fdf["Palt"] / 1000 * 0.017)) # MAKE SURE THIS IS RIGHT ()
+        available_cols.append("TAS")
 
     # TASMS - TAS M/S 
     if ("IAS" in available_cols) and ("Palt" in available_cols):
@@ -53,17 +53,17 @@ def add_derived_cols(fdf):
         fdf["PRatio"] = (1 - (fdf["Palt"] / 145442)) ** 5.25586
         available_cols.append("PRatio")
 
-    # boomAlpha - Boom alpha in degrees
+    # boomAlphaDer - Boom alpha in degrees
     if ("boomAlphaRaw" in available_cols):
         # =0.00000000000070918*V5^4-0.000000011698*V5^3+0.000070109*V5^2-0.21624*V5+310.21
-        fdf["boomAlpha"] = 0.00000000000070918 * np.power(fdf["boomAlphaRaw"], 4) - \
-                           0.000000011698      * np.power(fdf["boomAlphaRaw"], 3) + \
-                           0.000070109         * np.power(fdf["boomAlphaRaw"], 2) - \
-                           0.21624             *          fdf["boomAlphaRaw"]     + \
-                           310.21
-        available_cols.append("boomAlpha")
+        fdf["boomAlphaDer"] = 0.00000000000070918 * np.power(fdf["boomAlphaRaw"], 4) - \
+                              0.000000011698      * np.power(fdf["boomAlphaRaw"], 3) + \
+                              0.000070109         * np.power(fdf["boomAlphaRaw"], 2) - \
+                              0.21624             *          fdf["boomAlphaRaw"]     + \
+                              310.21
+        available_cols.append("boomAlphaDer")
 
-    # boomBeta - Boom beta in degrees
+    # boomBetaDer - Boom beta in degrees
     # if ("BoomBetaDer" in available_cols) and ("P45" in available_cols):
         # # BLANK
         # fdf["BoomBetaDer"] = 1
@@ -148,39 +148,39 @@ def add_derived_cols(fdf):
         # available_cols.append("v3SmthAlphIMUCur")
 
     # boomAlphDynaPitCur - Boom Alpha Dynamic Corrected (Pitch Derived Curves) (deg) 
-    # COULD USE boomAlphUpwaPitCur TO CALC
-    if ("flapsPos" in available_cols) and ("vnAccelVert" in available_cols) and ("vnAngularRatePitch" in available_cols) and ("IAS" in available_cols) and ("Palt" in available_cols) and ("boomAlpha" in available_cols):
+    # NOTE: COULD USE boomAlphUpwaPitCur TO CALC
+    if ("flapsPos" in available_cols) and ("vnAccelVert" in available_cols) and ("vnAngularRatePitch" in available_cols) and ("IAS" in available_cols) and ("Palt" in available_cols) and ("boomAlphaDer" in available_cols):
         # =IF(K2=0, 0.7751*X2-1.6016,IF(K2=20,0.7838*X2-1.83,IF(K2=40,0.8023*X2-2.3141)))-(0.1264*(-AJ2/9.80655-1))+(3.08*(AC2*57.2958)/(I2*(1+H2/1000*0.017))*1.68718)
         offset = (0.1264*(-fdf["vnAccelVert"]/9.80655-1))+(3.08*(fdf["vnAngularRatePitch"]*57.2958)/(fdf["IAS"]*(1+fdf["Palt"]/1000*0.017))*1.68718)
-        fdf.loc[fdf["flapsPos"] ==  0, "boomAlphDynaPitCur"] = 0.7751 * fdf["boomAlpha"] - 1.6016 - offset
-        fdf.loc[fdf["flapsPos"] == 20, "boomAlphDynaPitCur"] = 0.7838 * fdf["boomAlpha"] - 1.8300 - offset
-        fdf.loc[fdf["flapsPos"] == 40, "boomAlphDynaPitCur"] = 0.8023 * fdf["boomAlpha"] - 2.3141 - offset
+        fdf.loc[fdf["flapsPos"] ==  0, "boomAlphDynaPitCur"] = 0.7751 * fdf["boomAlphaDer"] - 1.6016 - offset
+        fdf.loc[fdf["flapsPos"] == 20, "boomAlphDynaPitCur"] = 0.7838 * fdf["boomAlphaDer"] - 1.8300 - offset
+        fdf.loc[fdf["flapsPos"] == 40, "boomAlphDynaPitCur"] = 0.8023 * fdf["boomAlphaDer"] - 2.3141 - offset
         available_cols.append("boomAlphDynaPitCur")
 
     # boomAlphDynaIMUCur - Boom Alpha Dynamic Corrected (IMU Derived Curves) (deg) 
-    # COULD USE boomAlphUpwaIMUCur TO CALC
-    if ("flapsPos" in available_cols) and ("vnAccelVert" in available_cols) and ("vnAngularRatePitch" in available_cols) and ("IAS" in available_cols) and ("Palt" in available_cols) and ("boomAlpha" in available_cols):
+    # NOTE: COULD USE boomAlphUpwaIMUCur TO CALC
+    if ("flapsPos" in available_cols) and ("vnAccelVert" in available_cols) and ("vnAngularRatePitch" in available_cols) and ("IAS" in available_cols) and ("Palt" in available_cols) and ("boomAlphaDer" in available_cols):
         # =IF(K2=0, 0.8139*X2-1.8903,IF(K2=20,0.8188*X2-2.2276,IF(K2=40,0.8085*X2-2.1983)))-(0.1264*(-AJ2/9.80655-1))+(3.08*(AC2*57.2958)/(I2*(1+H2/1000*0.017))*1.68718)
         offset = (0.1264*(-fdf["vnAccelVert"]/9.80655-1))+(3.08*(fdf["vnAngularRatePitch"]*57.2958)/(fdf["IAS"]*(1+fdf["Palt"]/1000*0.017))*1.68718)
-        fdf.loc[fdf["flapsPos"] ==  0, "boomAlphDynaIMUCur"] = 0.8139 * fdf["boomAlpha"] - 1.8903 - offset
-        fdf.loc[fdf["flapsPos"] == 20, "boomAlphDynaIMUCur"] = 0.8188 * fdf["boomAlpha"] - 2.2276 - offset
-        fdf.loc[fdf["flapsPos"] == 40, "boomAlphDynaIMUCur"] = 0.8085 * fdf["boomAlpha"] - 2.1983 - offset
+        fdf.loc[fdf["flapsPos"] ==  0, "boomAlphDynaIMUCur"] = 0.8139 * fdf["boomAlphaDer"] - 1.8903 - offset
+        fdf.loc[fdf["flapsPos"] == 20, "boomAlphDynaIMUCur"] = 0.8188 * fdf["boomAlphaDer"] - 2.2276 - offset
+        fdf.loc[fdf["flapsPos"] == 40, "boomAlphDynaIMUCur"] = 0.8085 * fdf["boomAlphaDer"] - 2.1983 - offset
         available_cols.append("boomAlphDynaIMUCur")
 
     # boomAlphUpwaPitCur - Boom Alpha Upwash Corrected Only (Pitch Dervied Curves) (deg) 
-    if ("flapsPos" in available_cols) and ("boomAlpha" in available_cols):
+    if ("flapsPos" in available_cols) and ("boomAlphaDer" in available_cols):
         # =IF(K2=0, 0.7751*X2-1.6016,IF(K2=20,0.7838*X2-1.83,IF(K2=40,0.8023*X2-2.3141)))
-        fdf.loc[fdf["flapsPos"] ==  0, "boomAlphUpwaPitCur"] = 0.7751 * fdf["boomAlpha"] - 1.6016
-        fdf.loc[fdf["flapsPos"] == 20, "boomAlphUpwaPitCur"] = 0.7838 * fdf["boomAlpha"] - 1.8300
-        fdf.loc[fdf["flapsPos"] == 40, "boomAlphUpwaPitCur"] = 0.8023 * fdf["boomAlpha"] - 2.3141
+        fdf.loc[fdf["flapsPos"] ==  0, "boomAlphUpwaPitCur"] = 0.7751 * fdf["boomAlphaDer"] - 1.6016
+        fdf.loc[fdf["flapsPos"] == 20, "boomAlphUpwaPitCur"] = 0.7838 * fdf["boomAlphaDer"] - 1.8300
+        fdf.loc[fdf["flapsPos"] == 40, "boomAlphUpwaPitCur"] = 0.8023 * fdf["boomAlphaDer"] - 2.3141
         available_cols.append("boomAlphUpwaPitCur")
 
     # boomAlphUpwaIMUCur - Boom Alpha Upwash Corrected Only (IMU Derived Curves) (deg) 
-    if ("flapsPos" in available_cols) and ("boomAlpha" in available_cols):
+    if ("flapsPos" in available_cols) and ("boomAlphaDer" in available_cols):
         # =IF(K2=0, 0.8139*X2-1.8903,IF(K2=20,0.8188*X2-2.2276,IF(K2=40,0.8085*X2-2.1983)))
-        fdf.loc[fdf["flapsPos"] ==  0, "boomAlphUpwaIMUCur"] = 0.8139 * fdf["boomAlpha"] - 1.8903
-        fdf.loc[fdf["flapsPos"] == 20, "boomAlphUpwaIMUCur"] = 0.8188 * fdf["boomAlpha"] - 2.2276
-        fdf.loc[fdf["flapsPos"] == 40, "boomAlphUpwaIMUCur"] = 0.8085 * fdf["boomAlpha"] - 2.1983
+        fdf.loc[fdf["flapsPos"] ==  0, "boomAlphUpwaIMUCur"] = 0.8139 * fdf["boomAlphaDer"] - 1.8903
+        fdf.loc[fdf["flapsPos"] == 20, "boomAlphUpwaIMUCur"] = 0.8188 * fdf["boomAlphaDer"] - 2.2276
+        fdf.loc[fdf["flapsPos"] == 40, "boomAlphUpwaIMUCur"] = 0.8085 * fdf["boomAlphaDer"] - 2.1983
         available_cols.append("boomAlphUpwaIMUCur")
 
     # vnFltPth - VN Flight Path Angle (deg) 
@@ -266,9 +266,9 @@ def add_derived_cols(fdf):
         available_cols.append("TrnRateDeg")
 
     # TrnRadFt - Turn Radius (feet) 
-    if ("KTAS" in available_cols) and ("vnBankAng" in available_cols):
+    if ("TAS" in available_cols) and ("vnBankAng" in available_cols):
         # =IF(DS2>20,(DN2^2/(11.26*TAN(DS2*0.017453))))
-        fdf.loc[fdf["vnBankAng"] >  20, "TrnRadFt"] = (fdf["KTAS"] ** 2) / (11.26 * np.tan(fdf["vnBankAng"] * 0.017453))
+        fdf.loc[fdf["vnBankAng"] >  20, "TrnRadFt"] = (fdf["TAS"] ** 2) / (11.26 * np.tan(fdf["vnBankAng"] * 0.017453))
       # fdf.loc[fdf["vnBankAng"] <= 20, "TrnRadFt"] = NaN
         fdf["TrnRadFt"] = 1
         available_cols.append("TrnRadFt")

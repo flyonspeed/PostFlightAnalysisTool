@@ -22,16 +22,29 @@ def to_replay(dataframe, filename):
     #offset_alt = 245
     #low_limit_alt = 245
 
+    # No offsets
+    #offset_lon    =  0.0
+    #offset_lat    =  0.0
+    #offset_alt    =    0
+    #low_limit_alt =    0
+
+    # Offsets to correct at Skypark
+    offset_lon    =  0.0005
+    offset_lat    =  0.00067
+    offset_alt    =   -40
+    low_limit_alt =    247
+
     # Offsets for Skypark at DeFuniak
-    offset_lon =  0.51181
-    offset_lat = -0.12074
-    offset_alt = 285
-    low_limit_alt = 285
+    #offset_lon    =  0.51181
+    #offset_lat    = -0.12074
+    #offset_alt    = 285
+    #low_limit_alt = 285
 
     # Init the alpha-beta filters
     #abf_pitch     = abf.AlphaBetaFilter(0.02, 0.1)
     #abf_roll      = abf.AlphaBetaFilter(0.02, 0.1)
-    abf_alt        = abf.AlphaBetaFilter(0.02, 0.01, 0.5, init_sample=low_limit_alt)
+    #abf_alt        = abf.AlphaBetaFilter(0.02, 0.01, 0.5, init_sample=low_limit_alt)
+    abf_alt        = abf.AlphaBetaFilter(0.02, 0.01, 0.5, init_sample=dataframe.iloc[0]["Palt"] + offset_alt)
 
     abf_turn_rate = abf.AlphaBetaFilter(0.02, 0.1)
     abf_slip      = abf.AlphaBetaFilter(0.02, 0.005, 0.5)
@@ -59,10 +72,8 @@ def to_replay(dataframe, filename):
             start_time = index
 
         # Calculate some values
-        #fdr_lat       = row["vnGnssLat"]
-        #fdr_lon       = row["vnGnssLon"]  
-        fdr_lat       = row["efisgpsLatitude"]  + offset_lat
-        fdr_lon       = row["efisgpsLongitude"] + offset_lon
+        fdr_lat       = row["vnGnssLat"]  + offset_lat
+        fdr_lon       = row["vnGnssLon"]  + offset_lon
 
         fdr_alt       = abf_alt.update(row["Palt"] + offset_alt)
         if fdr_alt < low_limit_alt:

@@ -175,7 +175,9 @@ def convert_garmin_row(garmin_row):
     try:
         
         # Return if bad data
-        if (garmin_row['GPS Fix Status'] != "3D") and (garmin_row['GPS Fix Status'] != "3DDiff"):
+        if (garmin_row['GPS Fix Status'] != "3D"    ) and \
+           (garmin_row['GPS Fix Status'] != "3D-"   ) and \
+           (garmin_row['GPS Fix Status'] != "3DDiff"):
             return False
         
         # Make a Zulu time
@@ -231,9 +233,6 @@ def convert_garmin_row(garmin_row):
             # Delete anything else
             else:
                 del garmin_row[garmin_data_key]
-
-
-
 
                 
     except:
