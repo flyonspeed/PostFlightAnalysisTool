@@ -286,20 +286,38 @@ if __name__=='__main__':
     output_dir           = ""
     file_timestamp       = datetime.datetime.now().strftime("%Y%m%dT%H%M%S")
     
+    # Google drive data
     if True :
-        test_data_dir          = "G:/.shortcut-targets-by-id/1JEHdf2zPb_F1R0v-s94Ia2RZNGjPCk2n/Flight Test Data/RV-4 Data/2023-10-29/"
-        output_filename_root   = test_data_dir + output_dir + "2023-10-29"
-        v2_data_dir            = "29 Oct 23 Cockpit Data/"
-        docs_data_dir          = "29 Oct 23 Docs Data/"
-        v2_data_filenames      = (test_data_dir + v2_data_dir + "log_4.csv") 
-        docs_data_filenames    = ( \
-                                  (test_data_dir + docs_data_dir + "log_4.csv", 1.0), \
-                                  )
-        efis_data_filename     = ""
-        garmin_data_filename   = ""
-        kml_data_filename      = ""
-        efis_time_correction   = 0.0
-        garmin_time_correction = 0.0
+        if False :
+            # Vac RV-4 data
+            test_data_dir          = "G:/.shortcut-targets-by-id/1JEHdf2zPb_F1R0v-s94Ia2RZNGjPCk2n/Flight Test Data/RV-4 Data/2023-10-29/"
+            output_filename_root   = test_data_dir + output_dir + "2023-10-29"
+            v2_data_dir            = "29 Oct 23 Cockpit Data/"
+            docs_data_dir          = "29 Oct 23 Docs Data/"
+            v2_data_filenames      = (test_data_dir + v2_data_dir + "log_4.csv") 
+            docs_data_filenames    = ( \
+                                      (test_data_dir + docs_data_dir + "log_4.csv", 1.0), \
+                                      )
+            efis_data_filename     = ""
+            garmin_data_filename   = ""
+            kml_data_filename      = ""
+            efis_time_correction   = 0.0
+            garmin_time_correction = 0.0
+        else :
+            # Terry RV-8 data
+            test_data_dir          = "G:/.shortcut-targets-by-id/1JEHdf2zPb_F1R0v-s94Ia2RZNGjPCk2n/Flight Test Data/RV-8 Data/2023-11-13/"
+            output_filename_root   = test_data_dir + output_dir + "2023-11-13"
+            v2_data_dir            = ""
+            docs_data_dir          = ""
+            v2_data_filenames      = (test_data_dir + v2_data_dir + "log_42.csv") 
+            docs_data_filenames    = None
+            efis_data_filename     = ""
+            garmin_data_filename   = ""
+            kml_data_filename      = ""
+            efis_time_correction   = 0.0
+            garmin_time_correction = 0.0
+
+    # Local test data
     else :
         test_data_dir          = "C:/Users/bob/OneDrive/Documents/sandbox/FlyONSPEED/Flight Test Data/RV-4/2022-05-10 Data/"
         v2_data_filenames      = (test_data_dir + "10 May 22 V2 Data/log_2.csv")
@@ -327,6 +345,7 @@ if __name__=='__main__':
     # Read the various data files
     v2_dataframe     = pd.DataFrame()
     docs_dataframe   = pd.DataFrame()
+    garmin_dataframe = pd.DataFrame()
     # merge_dataframe  = pd.DataFrame()
 
     if (v2_data_filenames != None) and (v2_data_filenames != ""):
@@ -336,6 +355,10 @@ if __name__=='__main__':
     if (docs_data_filenames != None) and (docs_data_filenames != ""):
         u.print_log("Read Docs...")
         docs_dataframe = read_docs(docs_data_filenames)
+
+    if (garmin_data_filename != None) and (garmin_data_filename != ""):
+        u.print_log("Read Garmin...")
+        garmin_dataframe = read_garmin(garmin_data_filename, garmin_time_correction)
 
 
     # Outputs
@@ -366,6 +389,12 @@ if __name__=='__main__':
                 merge_dataframe = docs_dataframe
             else:
                 merge_dataframe = merge_dataframe.merge(docs_dataframe, how='left', left_index=True, right_index=True)
+
+        if garmin_dataframe.empty == False:
+            if merge_dataframe.empty:
+                merge_dataframe = garmin_dataframe
+            else:
+                merge_dataframe = merge_dataframe.merge(garmin_dataframe, how='left', left_index=True, right_index=True)
 
         if v2_dataframe.empty == False:
 #            u.print_log("Add derived data columns...")
