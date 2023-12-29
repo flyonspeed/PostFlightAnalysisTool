@@ -14,6 +14,7 @@ Created on Wed Mar 11 2020
 # Someday look at seaborn
 # http://seaborn.pydata.org/index.html
 
+from csv import excel
 from msvcrt import kbhit
 import os
 import math
@@ -28,6 +29,7 @@ import Doc_Reader
 import EFIS_Reader
 import Garmin_Reader
 import KML_Reader
+import Excel_Write
 import XPlane_Write
 import Derived_Data
 import Utils as u
@@ -62,16 +64,29 @@ def plot_Pfwd(plot_center_sec, plot_span_sec):
     ts          = pd.Series(merge_dataframe.iloc[plot_start:plot_end].index).div(1000)
     #DynonPfwdSm = merge_dataframe.iloc[plot_start:plot_end]["Pfwd"]
     #AlSysPfwdSm = merge_dataframe.iloc[plot_start:plot_end]["docsPfwd"]
-    DynonPfwdSm = merge_dataframe.iloc[plot_start:plot_end]["PfwdSmoothed"]
-    AlSysPfwdSm = merge_dataframe.iloc[plot_start:plot_end]["docsPfwdSmoothed"]
-    
-    AlSysPfwdSmDer = AlSysPfwdSm.mul(1.15).add(50)
+
+    # Pfwd
+    if False:
+        DynonPData = merge_dataframe.iloc[plot_start:plot_end]["PfwdSmoothed"]
+        AlSysPData = merge_dataframe.iloc[plot_start:plot_end]["docsPfwdSmoothed"]
+        AlSysPfwdSmDer = AlSysPData.mul(1.15).add(50)
+        DynonLabel = "PfwdSmoothed"
+        AlSysLabel = "docsPfwdSmoothed Shifted"
+    # P45 / Pfwd
+    else:
+        DynonPData    = merge_dataframe.iloc[plot_start:plot_end]["P45Smoothed"]     / merge_dataframe.iloc[plot_start:plot_end]["PfwdSmoothed"]
+        AlSysPDataDer = merge_dataframe.iloc[plot_start:plot_end]["docsP45Smoothed"] / merge_dataframe.iloc[plot_start:plot_end]["docsPfwdSmoothed"]
+        FileNum       = merge_dataframe.iloc[plot_start:plot_end]["docsFileNum"] / 10.0
+        DynonLabel = "P45 / Pfwd"
+        AlSysLabel = "docsP45 / docsPfwd Shifted"
     
     #fig = plt.figure(figsize=(15.0, 15.0), dpi=300)
     fig = plt.figure(dpi=300)
     ax = fig.add_subplot(1, 1, 1)
-    ax.plot(ts, DynonPfwdSm,    color='tab:blue',   label="DynonPfwdSm",        linewidth=1.0)
-    ax.plot(ts, AlSysPfwdSmDer, color='tab:orange', label="docsPfwdSm Shifted", linewidth=1.0)
+    ax.set_ylim(-2.0, 2.0)
+    ax.plot(ts, DynonPData,    color='tab:blue',   label=DynonLabel, linewidth=1.0)
+    ax.plot(ts, AlSysPDataDer, color='tab:orange', label=AlSysLabel, linewidth=1.0)
+    ax.plot(ts, FileNum,       color='tab:gray',   label="File Num", linewidth=0.5)
     plt.xlabel("Seconds since Midnight")
     plt.grid(True)
     plt.legend(framealpha=1.0)
@@ -85,6 +100,9 @@ def plot_Pfwd(plot_center_sec, plot_span_sec):
 # -----------------------------------------------------------------------------
 
 def write_csv(flt_dataframe, output_filename):
+    # Get rid of unwanted data
+    flt_dataframe.drop("docsFileNum", axis=1, inplace=True)
+    
     flt_dataframe.to_csv(output_filename, index_label="msecSinceMidnite")
     print("Write CSV done")
 
@@ -123,7 +141,7 @@ def datamark_dataframe(dataframe, datamark_num):
 
 # Slice a dataframe into a set of dataframes based on datamark groups
 def slice_data(dataframe):
-    
+
     # Group the data by data mark
     datamark_groups = dataframe.groupby("DataMark")
 
@@ -145,19 +163,17 @@ def slice_data(dataframe):
 # ---------------------------------------------------------------------------
 
 def write_excel(flt_dataframe, output_filename):
+    # https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.ExcelWriter.html
+    # https://xlsxwriter.readthedocs.io/
 
+    # Get rid of unwanted data
+    flt_dataframe.drop("docsFileNum", axis=1, inplace=True)
+    
     # Write the individual datamark Excel tabs
     merge_dataframe_groups = slice_data(flt_dataframe)
    
-    print("Write " + output_filename + " ...")
-    num_groups     = len(merge_dataframe_groups.keys())
-    curr_group_idx = 1
-    with pd.ExcelWriter(output_filename) as writer:
-        for group_key in merge_dataframe_groups.keys():
-            datamark_sheet_name = "DM{}".format(group_key)
-            print("  Sheet '{}' ({} of {}) ...".format(datamark_sheet_name, curr_group_idx, num_groups))
-            merge_dataframe_groups[group_key].to_excel(writer, sheet_name=datamark_sheet_name, index_label="msecSinceMidnite")
-            curr_group_idx += 1
+    Excel_Write.to_excel(merge_dataframe_groups, output_filename)
+
     print("Write Excel done")
                 
 # ---------------------------------------------------------------------------
@@ -287,16 +303,16 @@ if __name__=='__main__':
     file_timestamp       = datetime.datetime.now().strftime("%Y%m%dT%H%M%S")
     
     # Google drive data
-    if True :
-        if False :
+    if False :
+        if True :
             # Vac RV-4 data
-            test_data_dir          = "G:/.shortcut-targets-by-id/1JEHdf2zPb_F1R0v-s94Ia2RZNGjPCk2n/Flight Test Data/RV-4 Data/2023-10-29/"
-            output_filename_root   = test_data_dir + output_dir + "2023-10-29"
-            v2_data_dir            = "29 Oct 23 Cockpit Data/"
-            docs_data_dir          = "29 Oct 23 Docs Data/"
-            v2_data_filenames      = (test_data_dir + v2_data_dir + "log_4.csv") 
+            test_data_dir          = "G:/.shortcut-targets-by-id/1JEHdf2zPb_F1R0v-s94Ia2RZNGjPCk2n/Flight Test Data/RV-4 Data/2023-12-12/"
+            output_filename_root   = test_data_dir + output_dir + "2023-12-12"
+            v2_data_dir            = "12 Dec 23 Cockpit Data/"
+            docs_data_dir          = "12 Dec 23 Docs Data/"
+            v2_data_filenames      = (test_data_dir + v2_data_dir + "log_2-3.csv") 
             docs_data_filenames    = ( \
-                                      (test_data_dir + docs_data_dir + "log_4.csv", 1.0), \
+                                      (test_data_dir + docs_data_dir + "log_4.csv", 2.6), \
                                       )
             efis_data_filename     = ""
             garmin_data_filename   = ""
@@ -305,14 +321,14 @@ if __name__=='__main__':
             garmin_time_correction = 0.0
         else :
             # Terry RV-8 data
-            test_data_dir          = "G:/.shortcut-targets-by-id/1JEHdf2zPb_F1R0v-s94Ia2RZNGjPCk2n/Flight Test Data/RV-8 Data/2023-11-13/"
-            output_filename_root   = test_data_dir + output_dir + "2023-11-13"
+            test_data_dir          = "G:/.shortcut-targets-by-id/1JEHdf2zPb_F1R0v-s94Ia2RZNGjPCk2n/Flight Test Data/RV-8 Data/2023-11-19T/"
+            output_filename_root   = test_data_dir + output_dir + "2023-11-19 - 53"
             v2_data_dir            = ""
             docs_data_dir          = ""
-            v2_data_filenames      = (test_data_dir + v2_data_dir + "log_42.csv") 
+            v2_data_filenames      = (test_data_dir + v2_data_dir + "log_53.csv") 
             docs_data_filenames    = None
             efis_data_filename     = ""
-            garmin_data_filename   = ""
+            garmin_data_filename   = test_data_dir + v2_data_dir + "log_20231119_091925_KTEW.csv"
             kml_data_filename      = ""
             efis_time_correction   = 0.0
             garmin_time_correction = 0.0
@@ -419,7 +435,7 @@ if __name__=='__main__':
             output_filename = output_filename_root + " - Merged " + file_timestamp + ".xlsx"
             print("Write " + os.path.basename(output_filename) + " ...")
             write_excel(merge_dataframe, output_filename)
-        
+                   
         if (make_xplane == True) or (input == 'x'):
             # Make sure the output folder exists
             if not os.path.exists(test_data_dir + output_dir):

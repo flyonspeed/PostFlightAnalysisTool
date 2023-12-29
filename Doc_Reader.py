@@ -97,6 +97,7 @@ def make_dataframe(doc_filenames):
     #if isinstance(time_corrections, int) or isinstance(time_corrections, float):
     #    time_corrections_list = [time_corrections,]
 
+    doc_file_num = 1
     for file_idx in range(len(doc_filenames_list)):
 
         # Get the current file name and time correction
@@ -138,6 +139,9 @@ def make_dataframe(doc_filenames):
 
                 except:
                     continue
+
+                # Add the file number
+                doc_row["docsFileNum"] = doc_file_num
 
                 # We got to here so store the data                
                 doc_data_array.append(doc_row)
@@ -195,10 +199,13 @@ def make_dataframe(doc_filenames):
             except Exception as error:
                 print("Error '" + repr(error) + "' at line " + str(array_idx))
                 doc_data_array.pop(array_idx)
-        
+
+        doc_file_num += 1
+
         # Append the new data to the end of the master data arrays
         doc_data_array_master += doc_data_array
         index_time_master     += index_time
+
 
     # Add data to a pandas dataframe of flight test data
     # ---------------------------------------------------
