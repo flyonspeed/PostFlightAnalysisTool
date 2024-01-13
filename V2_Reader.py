@@ -24,36 +24,36 @@ class V2_File():
     # Used to remap CSV data file labels into something more friendly for analysis
     label_remap = \
         {
-        'Pitch_1':          'Pitch',
-        'Roll_1':           'Roll',
+        'Pitch_1':          'Pitch',                # May not need
+        'Roll_1':           'Roll',                 # May not need
         'boomStatic':       'boomStaticRaw',
         'boomDynamic':      'boomDynamicRaw',
         'boomAlpha':        'boomAlphaRaw',
         'boomBeta':         'boomBetaRaw',
-        'AngularRateRoll':  'vnAngularRateRoll',
-        'AngularRatePitch': 'vnAngularRatePitch',
-        'AngularRateYaw':   'vnAngularRateYaw',
-        'VelNedNorth':      'vnVelNedNorth',
-        'VelNedEast':       'vnVelNedEast',
-        'VelNedDown':       'vnVelNedDown',
-        'AccelFwd':         'vnAccelFwd',
-        'AccelLat':         'vnAccelLat',
-        'AccelVert':        'vnAccelVert',
-        'Yaw':              'vnYaw',
-        'Pitch_2':          'vnPitch',
-        'Roll_2':           'vnRoll',
-        'LinAccFwd':        'vnLinAccFwd',
-        'LinAccLat':        'vnLinAccLat',
-        'LinAccVert':       'vnLinAccVert',
-        'YawSigma':         'vnYawSigma',
-        'RollSigma':        'vnRollSigma',
-        'PitchSigma':       'vnPitchSigma',
-        'GnssVelNedNorth':  'vnGnssVelNedNorth',
-        'GnssVelNedEast':   'vnGnssVelNedEast',
-        'GnssVelNedDown':   'vnGnssVelNedDown',
-        'GPSFix':           'vnGPSFix',
-        'TimeUTC':          'vnTimeUTC',
-        ' TimeUTC':         'vnTimeUTC'
+        'AngularRateRoll':  'vnAngularRateRoll',    # May not need
+        'AngularRatePitch': 'vnAngularRatePitch',   # May not need
+        'AngularRateYaw':   'vnAngularRateYaw',     # May not need
+        'VelNedNorth':      'vnVelNedNorth',        # May not need
+        'VelNedEast':       'vnVelNedEast',         # May not need
+        'VelNedDown':       'vnVelNedDown',         # May not need
+        'AccelFwd':         'vnAccelFwd',           # May not need
+        'AccelLat':         'vnAccelLat',           # May not need
+        'AccelVert':        'vnAccelVert',          # May not need
+        'Yaw':              'vnYaw',                # May not need
+        'Pitch_2':          'vnPitch',              # May not need
+        'Roll_2':           'vnRoll',               # May not need
+        'LinAccFwd':        'vnLinAccFwd',          # May not need
+        'LinAccLat':        'vnLinAccLat',          # May not need
+        'LinAccVert':       'vnLinAccVert',         # May not need
+        'YawSigma':         'vnYawSigma',           # May not need
+        'RollSigma':        'vnRollSigma',          # May not need
+        'PitchSigma':       'vnPitchSigma',         # May not need
+        'GnssVelNedNorth':  'vnGnssVelNedNorth',    # May not need
+        'GnssVelNedEast':   'vnGnssVelNedEast',     # May not need
+        'GnssVelNedDown':   'vnGnssVelNedDown',     # May not need
+        'GPSFix':           'vnGPSFix',             # May not need
+        'TimeUTC':          'vnTimeUTC',            # May not need
+        ' TimeUTC':         'vnTimeUTC'             # May not need
          }
 
     def __init__(self, filename):

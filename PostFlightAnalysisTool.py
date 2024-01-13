@@ -303,16 +303,16 @@ if __name__=='__main__':
     file_timestamp       = datetime.datetime.now().strftime("%Y%m%dT%H%M%S")
     
     # Google drive data
-    if False :
+    if True :
         if True :
             # Vac RV-4 data
-            test_data_dir          = "G:/.shortcut-targets-by-id/1JEHdf2zPb_F1R0v-s94Ia2RZNGjPCk2n/Flight Test Data/RV-4 Data/2023-12-12/"
-            output_filename_root   = test_data_dir + output_dir + "2023-12-12"
-            v2_data_dir            = "12 Dec 23 Cockpit Data/"
-            docs_data_dir          = "12 Dec 23 Docs Data/"
-            v2_data_filenames      = (test_data_dir + v2_data_dir + "log_2-3.csv") 
+            test_data_dir          = "G:/.shortcut-targets-by-id/1JEHdf2zPb_F1R0v-s94Ia2RZNGjPCk2n/Flight Test Data/RV-4 Data/2024-01-01/"
+            output_filename_root   = test_data_dir + output_dir + "2024-01-01 - 2"
+            v2_data_dir            = "1 Jan 24 Cockpit Data/"
+            docs_data_dir          = "1 Jan 24 Docs Data/"
+            v2_data_filenames      = (test_data_dir + v2_data_dir + "log_3-3.csv") 
             docs_data_filenames    = ( \
-                                      (test_data_dir + docs_data_dir + "log_4.csv", 2.6), \
+                                      (test_data_dir + docs_data_dir + "log_3-3.csv", 1.3), \
                                       )
             efis_data_filename     = ""
             garmin_data_filename   = ""
