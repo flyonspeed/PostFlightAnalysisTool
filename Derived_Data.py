@@ -8,9 +8,18 @@ Created on Wed Mar 1 2022
 import math
 import numpy as np
 import pandas as pd
+import re
 
 import Excel_Columns as ExCol
 import Alpha_Beta_Filter as abf
+
+# Precompile the equation strip regular expression
+strip_re = re.compile(r'fdf\[\'(.*?)\'\]')
+
+# Strip the data frame variable reference  from an equation string for better display
+def eq_strip(equation):
+    stripped_eq = strip_re.sub(r'\1', equation)
+    return stripped_eq
 
 
 def add_derived_cols(fdf):
@@ -31,27 +40,39 @@ def add_derived_cols(fdf):
     
     if ("priPFwd" in available_cols):
         # fdf["priPFwdSmthW"] = fdf["priPFwd"].rolling(25, center=True).mean()
-        fdf["priPFwdSmthW"] = eval("fdf['priPFwd'].rolling(25, center=True).mean()")
+        eq = "fdf['priPFwd'].rolling(25, center=True).mean()"
+        ExCol.column_def["priPFwdSmthW"]["equation"] = eq_strip(eq)
+        fdf["priPFwdSmthW"] = eval(eq)
         available_cols.append("priPFwdSmthW")
 
     if ("priP45" in available_cols):
-        fdf["priP45SmthW"] = fdf["priP45"].rolling(25, center=True).mean()
+        eq = "fdf['priP45'].rolling(25, center=True).mean()"
+        ExCol.column_def["priP45SmthW"]["equation"] = eq_strip(eq)
+        fdf["priP45SmthW"] = eval(eq)
         available_cols.append("priP45SmthW")
 
     if ("secPFwd" in available_cols):
-        fdf["secPFwdSmthW"] = fdf["secPFwd"].rolling(25, center=True).mean()
+        eq = "fdf['secPFwd'].rolling(25, center=True).mean()"
+        ExCol.column_def["secPFwdSmthW"]["equation"] = eq_strip(eq)
+        fdf["secPFwdSmthW"] = eval(eq)
         available_cols.append("secPFwdSmthW")
 
     if ("secP45" in available_cols):
-        fdf["secP45SmthW"] = fdf["secP45"].rolling(25, center=True).mean()
+        eq = "fdf['secP45'].rolling(25, center=True).mean()"
+        ExCol.column_def["secP45SmthW"]["equation"] = eq_strip(eq)
+        fdf["secP45SmthW"] = eval(eq)
         available_cols.append("secP45SmthW")
 
     if ("priPStatic" in available_cols):
-        fdf["priPStaticSmth"] = fdf["priPStatic"].rolling(50, center=True).mean()
+        eq = "fdf['priPStatic'].rolling(50, center=True).mean()"
+        ExCol.column_def["priPStaticSmth"]["equation"] = eq_strip(eq)
+        fdf["priPStaticSmth"] = eval(eq)
         available_cols.append("priPStaticSmth")
 
     if ("secPStatic" in available_cols):
-        fdf["secPStaticSmth"] = fdf["secPStatic"].rolling(50, center=True).mean()
+        eq = "fdf['secPStatic'].rolling(50, center=True).mean()"
+        ExCol.column_def["secPStaticSmth"]["equation"] = eq_strip(eq)
+        fdf["secPStaticSmth"] = eval(eq)
         available_cols.append("secPStaticSmth")
 
     # In several places secondary system pressures are normalized to
@@ -88,49 +109,65 @@ def add_derived_cols(fdf):
     # vnVelNedNorthFPS
     # '=vnVelNedNorth*3.2808399
     if ("vnVelNedNorth" in available_cols):
-        fdf["vnVelNedNorthFPS"] = fdf["vnVelNedNorth"] * 3.2808399
+        eq = "fdf['vnVelNedNorth'] * 3.2808399"
+        ExCol.column_def["vnVelNedNorthFPS"]["equation"] = eq_strip(eq)
+        fdf["vnVelNedNorthFPS"] = eval(eq)
         available_cols.append("vnVelNedNorthFPS")
 
     # vnVelNedEastFPS
     # '=vnVelNedEast*3.2808399
     if ("vnVelNedEast" in available_cols):
-        fdf["vnVelNedEastFPS"] = fdf["vnVelNedEast"] * 3.2808399
+        eq = "fdf['vnVelNedEast'] * 3.2808399"
+        ExCol.column_def["vnVelNedEastFPS"]["equation"] = eq_strip(eq)
+        fdf["vnVelNedEastFPS"] = eval(eq)
         available_cols.append("vnVelNedEastFPS")
 
     # vnVelNedDownFPS
     # '=vnVelNedDown*3.2808399
     if ("vnVelNedDown" in available_cols):
-        fdf["vnVelNedDownFPS"] = fdf["vnVelNedDown"] * 3.2808399
+        eq = "fdf['vnVelNedDown'] * 3.2808399"
+        ExCol.column_def["vnVelNedDownFPS"]["equation"] = eq_strip(eq)
+        fdf["vnVelNedDownFPS"] = eval(eq)
         available_cols.append("vnVelNedDownFPS")
 
     # vnFwdG
     # '=vnAccelFwd/9.80655
     if ("vnAccelFwd" in available_cols):
-        fdf["vnFwdG"] = fdf["vnAccelFwd"] / 9.80655
+        eq = "fdf['vnAccelFwd'] / 9.80655"
+        ExCol.column_def["vnFwdG"]["equation"] = eq_strip(eq)
+        fdf["vnFwdG"] = eval(eq)
         available_cols.append("vnFwdG")
 
     # vnLatG
     # '=vnAccelLat/9.80655
     if ("vnAccelLat" in available_cols):
-        fdf["vnLatG"] = fdf["vnAccelLat"] / 9.80655
+        eq = "fdf['vnAccelLat'] / 9.80655"
+        ExCol.column_def["vnLatG"]["equation"] = eq_strip(eq)
+        fdf["vnLatG"] = eval(eq)
         available_cols.append("vnLatG")
 
     # vnLinAccFwdG
     # '=vnLinAccFwd/9.80655
     if ("vnLinAccFwd" in available_cols):
-        fdf["vnLinAccFwdG"] = fdf["vnLinAccFwd"] / 9.80655
+        eq = "fdf['vnLinAccFwd'] / 9.80655"
+        ExCol.column_def["vnLinAccFwdG"]["equation"] = eq_strip(eq)
+        fdf["vnLinAccFwdG"] = eval(eq)
         available_cols.append("vnLinAccFwdG")
 
     # vnLinAccLatG
     # '=vnLinAccLat/9.80655
     if ("vnLinAccLat" in available_cols):
-        fdf["vnLinAccLatG"] = fdf["vnLinAccLat"] / 9.80655
+        eq = "fdf['vnLinAccLat'] / 9.80655"
+        ExCol.column_def["vnLinAccLatG"]["equation"] = eq_strip(eq)
+        fdf["vnLinAccLatG"] = eval(eq)
         available_cols.append("vnLinAccLatG")
 
     # vnLinAccVertG
     # '=-vnLinAccVert/9.80655
     if ("vnLinAccVert" in available_cols):
-        fdf["vnLinAccVertG"] = -fdf["vnLinAccVert"] / 9.80655
+        eq = "-fdf['vnLinAccVert'] / 9.80655"
+        ExCol.column_def["vnLinAccVertG"]["equation"] = eq_strip(eq)
+        fdf["vnLinAccVertG"] = eval(eq)
         available_cols.append("vnLinAccVertG")
 
     # Area 3.  Pressures (PSI and mb) and Coefficient of Pressures
@@ -145,16 +182,18 @@ def add_derived_cols(fdf):
     # OLD '=0.0002*(priPFwdSmthW+8111)-1.25 WRONG!
     # NEW '=priPFwdSmthW/6553.0
     if ("priPFwdSmthW" in available_cols):
-        # fdf["priPFwdSmthPSI"] = 0.0002*(fdf["priPFwdSmthW"]+8111)-1.25
-        fdf["priPFwdSmthPSI"] = fdf["priPFwdSmthW"] / 6553.0
+        eq = "fdf['priPFwdSmthW'] / 6553.0"
+        ExCol.column_def["priPFwdSmthPSI"]["equation"] = eq_strip(eq)
+        fdf["priPFwdSmthPSI"] = eval(eq)
         available_cols.append("priPFwdSmthPSI")
 
     # priP45SmthPSI
     # OLD '=0.0002*(priP45SmthW+8055)-1.25 WRONG!
     # NEW '=priP45SmthW/6553.0
     if ("priP45SmthW" in available_cols):
-        # fdf["priP45SmthPSI"] = 0.0002*(fdf["priP45SmthW"]+8055)-1.25 
-        fdf["priP45SmthPSI"] = fdf["priP45SmthW"] / 6553.0
+        eq = "fdf['priP45SmthW'] / 6553.0"
+        ExCol.column_def["priP45SmthPSI"]["equation"] = eq_strip(eq)
+        fdf["priP45SmthPSI"] = eval(eq)
         available_cols.append("priP45SmthPSI")
 
     # Looks like Vac made an attempt to reference pressures to the priPStatic, which
@@ -165,14 +204,18 @@ def add_derived_cols(fdf):
     # OLD '=0.0002*(secPFwdSmthW+8192)-1.25+(secPStatic*0.0145038)-(priPStatic*0.0145038)
     # NEW '=(secPFwdSmthW/6553.0)+(secPStatic-priPStatic)*0.0145038
     if ("secPFwdSmthW" in available_cols) and ("StaticCorrSmthMB" in available_cols):
-        fdf["secPFwdSmthPSI"] = fdf["secPFwdSmthW"]/6553.0 + fdf["StaticCorrSmthMB"]*0.0145038
+        eq = "fdf['secPFwdSmthW']/6553.0 + fdf['StaticCorrSmthMB']*0.0145038"
+        ExCol.column_def["secPFwdSmthPSI"]["equation"] = eq_strip(eq)
+        fdf["secPFwdSmthPSI"] = eval(eq)
         available_cols.append("secPFwdSmthPSI")
 
     # secP45SmthPSI
     # OLD '=0.0002*(secP45SmthW+8192)-1.25+(secPStatic*0.0145038)-(priPStatic*0.0145038)
     # NEW '=(secP45SmthW/6553.0)+(secPStatic-priPStatic)*0.0145038
     if ("secP45SmthW" in available_cols) and ("StaticCorrSmthMB" in available_cols):
-        fdf["secP45SmthPSI"] = fdf["secP45SmthW"]/6553.0 + fdf["StaticCorrSmthMB"]*0.0145038
+        eq = "fdf['secP45SmthW']/6553.0 + fdf['StaticCorrSmthMB']*0.0145038"
+        ExCol.column_def["secP45SmthPSI"]["equation"] = eq_strip(eq)
+        fdf["secP45SmthPSI"] = eval(eq)
         available_cols.append("secP45SmthPSI")
 
     # Again, this conversion to millibars is all jacked up. Do a straight 
@@ -182,53 +225,68 @@ def add_derived_cols(fdf):
     # OLD '=0.0105*(priPFwdSmthW+8111)-86.183 WRONG
     # NEW '=priPFwdSmthPSI * 68.94757
     if ("priPFwdSmthPSI" in available_cols):
-        # fdf["priPFwdSmthMB"] = 0.0105*(fdf["priPFwdSmthW"]+8111)-86.183 
-        fdf["priPFwdSmthMB"] = fdf["priPFwdSmthPSI"] * 68.94757
+        eq = "fdf['priPFwdSmthPSI'] * 68.94757"
+        ExCol.column_def["priPFwdSmthMB"]["equation"] = eq_strip(eq)
+        fdf["priPFwdSmthMB"] = eval(eq)
         available_cols.append("priPFwdSmthMB")
 
     # priP45SmthMB
     # OLD '=0.0105*(priP45SmthW+8192)-86.183 WRONG!
     # NEW '=priP45SmthPSI * 68.94757
     if ("priP45SmthPSI" in available_cols):
-        fdf["priP45SmthMB"] = fdf["priP45SmthPSI"]  * 68.94757
+        eq = "fdf['priP45SmthPSI']  * 68.94757"
+        ExCol.column_def["priP45SmthMB"]["equation"] = eq_strip(eq)
+        fdf["priP45SmthMB"] = eval(eq)
         available_cols.append("priP45SmthMB")
 
     # secPFwdSmthMB
     # OLD '=0.0105*(secPFwdSmthW+8192)-86.183+secPStatic-priPStatic
     # NEW '=secPFwdSmthPSI * 68.94757 + secPStatic - priPStatic
     if ("secPFwdSmthPSI" in available_cols) and ("StaticCorrSmthMB" in available_cols):
-        fdf["secPFwdSmthMB"] = fdf["secPFwdSmthPSI"] * 68.94757 + fdf["StaticCorrSmthMB"]
+        eq = "fdf['secPFwdSmthPSI'] * 68.94757 + fdf['StaticCorrSmthMB']"
+        ExCol.column_def["secPFwdSmthMB"]["equation"] = eq_strip(eq)
+        fdf["secPFwdSmthMB"] = eval(eq)
         available_cols.append("secPFwdSmthMB")
 
     # secP45SmthMB
     # OLD '=0.0105*(secP45SmthW+8192)-86.183+secPStatic-priPStatic
     # NEW '=secP45SmthPSI * 68.94757 + secPStatic - priPStatic
     if ("secP45SmthPSI" in available_cols) and ("StaticCorrSmthMB" in available_cols):
-        fdf["secP45SmthMB"] = fdf["secP45SmthPSI"] * 68.94757 + fdf["StaticCorrSmthMB"]
+        eq = "fdf['secP45SmthPSI'] * 68.94757 + fdf['StaticCorrSmthMB']"
+        ExCol.column_def["secP45SmthMB"]["equation"] = eq_strip(eq)
+        fdf["secP45SmthMB"] = eval(eq)
         available_cols.append("secP45SmthMB")
 
     # priCP3Inst - V2 CP3 Inst (priP45/priPFwd)
     # =E2/C2
     if ("priPFwd" in available_cols) and ("priP45" in available_cols):
-        fdf["priCP3Inst"] = fdf["priP45"] / fdf["priPFwd"]  
+        eq = "fdf['priP45'] / fdf['priPFwd']"
+        ExCol.column_def["priCP3Inst"]["equation"] = eq_strip(eq)
+        fdf["priCP3Inst"] = eval(eq)
         available_cols.append("priCP3Inst")
 
     # priCP3Smth - V2 CP3 Smooth (priP45/priPFwd)
     # =F2/D2
     if ("priPFwdSmthW" in available_cols) and ("priP45SmthW" in available_cols):
-        fdf["priCP3Smth"] = fdf["priP45SmthW"] / fdf["priPFwdSmthW"]
+        eq = "fdf['priP45SmthW'] / fdf['priPFwdSmthW']"
+        ExCol.column_def["priCP3Smth"]["equation"] = eq_strip(eq)
+        fdf["priCP3Smth"] = eval(eq)
         available_cols.append("priCP3Smth")
     
     # secCP3Inst - V3 CP3 Instantaneous
     # =(Q2+8192)/(S2+8192)
     if ("secPFwd" in available_cols) and ("secP45" in available_cols):
-        fdf["secCP3Inst"] = (fdf["secPFwd"]+8192) / (fdf["secP45"]+8192)
+        eq = "(fdf['secPFwd']+8192) / (fdf['secP45']+8192)"
+        ExCol.column_def["secCP3Inst"]["equation"] = eq_strip(eq)
+        fdf["secCP3Inst"] = eval(eq)
         available_cols.append("secCP3Inst")
 
     # secCP3Smth - V3 CP3 Smoothed
     # =(R2+8192)/(T2+8192)
     if ("secPFwdSmthW" in available_cols) and ("secP45SmthW" in available_cols):
-        fdf["secCP3Smth"] = (fdf["secPFwdSmthW"]+8192) / (fdf["secP45SmthW"]+8192)
+        eq = "(fdf['secPFwdSmthW']+8192) / (fdf['secP45SmthW']+8192)"
+        ExCol.column_def["secCP3Smth"]["equation"] = eq_strip(eq)
+        fdf["secCP3Smth"] = eval(eq)
         available_cols.append("secCP3Smth")
 
     # Note, arguments for np.arctan2(y,x) are opposite of Excel =atan2(x,y)
@@ -236,37 +294,49 @@ def add_derived_cols(fdf):
     # priCP4Inst
     # '=ATAN2(priPFwd,priP45)
     if ("priPFwd" in available_cols) and ("priP45" in available_cols):
-        fdf["priCP4Inst"] = np.arctan2(fdf["priP45"], fdf["priPFwd"])
+        eq = "np.arctan2(fdf['priP45'], fdf['priPFwd'])"
+        ExCol.column_def["priCP4Inst"]["equation"] = eq_strip(eq)
+        fdf["priCP4Inst"] = eval(eq)
         available_cols.append("priCP4Inst")
 
     # priCP4Smth
     # '=ATAN2(priPFwdSmthW,priP45SmthW)
     if ("priPFwdSmthW" in available_cols) and ("priP45SmthW" in available_cols):
-        fdf["priCP4Smth"] = np.arctan2(fdf["priP45SmthW"], fdf["priPFwdSmthW"])
+        eq = "np.arctan2(fdf['priP45SmthW'], fdf['priPFwdSmthW'])"
+        ExCol.column_def["priCP4Smth"]["equation"] = eq_strip(eq)
+        fdf["priCP4Smth"] = eval(eq)
         available_cols.append("priCP4Smth")
 
     # secCP4Inst
     # '=ATAN2(secPFwd,secP45)
     if ("secPFwd" in available_cols) and ("secP45" in available_cols):
-        fdf["secCP4Inst"] = np.arctan2(fdf["secP45"], fdf["secPFwd"])
+        eq = "np.arctan2(fdf['secP45'], fdf['secPFwd'])"
+        ExCol.column_def["secCP4Inst"]["equation"] = eq_strip(eq)
+        fdf["secCP4Inst"] = eval(eq)
         available_cols.append("secCP4Inst")
 
     # secCP4Smth
     # '=ATAN2(secPFwdSmthW,secP45SmthW)
     if ("secPFwdSmthW" in available_cols) and ("secP45SmthW" in available_cols):
-        fdf["secCP4Smth"] = np.arctan2(fdf["secP45SmthW"], fdf["secPFwdSmthW"])
+        eq = "np.arctan2(fdf['secP45SmthW'], fdf['secPFwdSmthW'])"
+        ExCol.column_def["secCP4Smth"]["equation"] = eq_strip(eq)
+        fdf["secCP4Smth"] = eval(eq)
         available_cols.append("secCP4Smth")
 
     # priFwd-45/q
     # '=(priPFwdSmthPSI-priP45SmthPSI)/priPFwdSmthPSI
     if ("priPFwdSmthPSI" in available_cols) and ("priP45SmthPSI" in available_cols):
-        fdf["priFwd-45/q"] = (fdf["priPFwdSmthPSI"]-fdf["priP45SmthPSI"])/fdf["priPFwdSmthPSI"]
+        eq = "(fdf['priPFwdSmthPSI']-fdf['priP45SmthPSI'])/fdf['priPFwdSmthPSI']"
+        ExCol.column_def["priFwd-45/q"]["equation"] = eq_strip(eq)
+        fdf["priFwd-45/q"] = eval(eq)
         available_cols.append("priFwd-45/q")
 
     # secFwd-45/q
     # '=(secPFwdSmthPSI-secP45SmthPSI)/secPFwdSmthPSI
     if ("secPFwdSmthPSI" in available_cols) and ("secP45SmthPSI" in available_cols):
-        fdf["secFwd-45/q"] = (fdf["secPFwdSmthPSI"]-fdf["secP45SmthPSI"])/fdf["secPFwdSmthPSI"]
+        eq = "(fdf['secPFwdSmthPSI']-fdf['secP45SmthPSI'])/fdf['secPFwdSmthPSI']"
+        ExCol.column_def["secFwd-45/q"]["equation"] = eq_strip(eq)
+        fdf["secFwd-45/q"] = eval(eq)
         available_cols.append("secFwd-45/q")
 
     # Area 4.  Atmospherics
@@ -275,43 +345,57 @@ def add_derived_cols(fdf):
     # OATF
     # '=(priOAT*(9/5))+32
     if "priOAT" in available_cols:
-        fdf["OATF"] = (fdf["priOAT"] * 9.0/5.0) + 32.0
+        eq = "(fdf['priOAT'] * 9.0/5.0) + 32.0"
+        ExCol.column_def["OATF"]["equation"] = eq_strip(eq)
+        fdf["OATF"] = eval(eq)
         available_cols.append("OATF")
 
     # StdTempF
     # '=59-(priAltitude/1000*3.566)
     if "priAltitude" in available_cols:
-        fdf["StdTempF"] = 59 - (fdf["priAltitude"]/1000*3.566)
+        eq = "59 - (fdf['priAltitude']/1000*3.566)"
+        ExCol.column_def["StdTempF"]["equation"] = eq_strip(eq)
+        fdf["StdTempF"] = eval(eq)
         available_cols.append("StdTempF")
 
     # StdTempDeltaF
     # '=OATF-StdTempF
     if ("OATF" in available_cols) and ("StdTempF" in available_cols):
-        fdf["StdTempDeltaF"] = fdf["OATF"] - fdf["StdTempF"]
+        eq = "fdf['OATF'] - fdf['StdTempF']"
+        ExCol.column_def["StdTempDeltaF"]["equation"] = eq_strip(eq)
+        fdf["StdTempDeltaF"] = eval(eq)
         available_cols.append("StdTempDeltaF")
 
     # StdTempC (OK)
     # '=15-(priAltitude/1000*1.9812)
     if "priAltitude" in available_cols:
-        fdf["StdTempC"] = 15 - (fdf["priAltitude"]/1000*1.9812)
+        eq = "15 - (fdf['priAltitude']/1000*1.9812)"
+        ExCol.column_def["StdTempC"]["equation"] = eq_strip(eq)
+        fdf["StdTempC"] = eval(eq)
         available_cols.append("StdTempC")
 
     # StdTempDeltaC (OK)
     # '=priOAT-StdTempC
     if ("priOAT" in available_cols) and ("StdTempC" in available_cols):
-        fdf["StdTempDeltaC"] = fdf["priOAT"] - fdf["StdTempC"]
+        eq = "fdf['priOAT'] - fdf['StdTempC']"
+        ExCol.column_def["StdTempDeltaC"]["equation"] = eq_strip(eq)
+        fdf["StdTempDeltaC"] = eval(eq)
         available_cols.append("StdTempDeltaC")
 
     # StdTempK (OK)
     # '=288.15-(priAltitude/1000*1.9812)
     if "priAltitude" in available_cols:
-        fdf["StdTempK"] = 288.15 - (fdf["priAltitude"]/1000*1.9812)
+        eq = "288.15 - (fdf['priAltitude']/1000*1.9812)"
+        ExCol.column_def["StdTempK"]["equation"] = eq_strip(eq)
+        fdf["StdTempK"] = eval(eq)
         available_cols.append("StdTempK")
 
     # Pressure Ratio (OK)
     # =(1-priAltitude/145442)^5.25586
     if "priAltitude" in available_cols:
-        fdf["PresRatio"] = (1 - (fdf["priAltitude"] / 145442)) ** 5.25586
+        eq = "(1 - (fdf['priAltitude'] / 145442)) ** 5.25586"
+        ExCol.column_def["PresRatio"]["equation"] = eq_strip(eq)
+        fdf["PresRatio"] = eval(eq)
         available_cols.append("PresRatio")
 
     # DenRatio (OK, values checked)
@@ -319,13 +403,17 @@ def add_derived_cols(fdf):
     # https://eaglepubs.erau.edu/introductiontoaerospaceflightvehicles/chapter/international-standard-atmosphere-isa/
     # NEW =PresRatio * 518.67 / (OATF+459.7)
     if ("PresRatio" in available_cols) and ("OATF" in available_cols):
-        fdf["DenRatio"] = fdf["PresRatio"] * 518.67 / (460+fdf["OATF"])
+        eq = "fdf['PresRatio'] * 518.67 / (460+fdf['OATF'])"
+        ExCol.column_def["DenRatio"]["equation"] = eq_strip(eq)
+        fdf["DenRatio"] = eval(eq)
         available_cols.append("DenRatio")
         
     # DenAlt (OK, values checked)
     # '=priAltitude+120*(StdTempDeltaC)
     if ("priAltitude" in available_cols) and ("StdTempDeltaC" in available_cols):
-        fdf["DenAlt"] = fdf["priAltitude"] + 118.8 * fdf["StdTempDeltaC"]
+        eq = "fdf['priAltitude'] + 118.8 * fdf['StdTempDeltaC']"
+        ExCol.column_def["DenAlt"]["equation"] = eq_strip(eq)
+        fdf["DenAlt"] = eval(eq)
         available_cols.append("DenAlt")
 
     # Area 5.  Air Data Boom Uncorrected Angles, Pressures and Airspeeds
@@ -333,18 +421,34 @@ def add_derived_cols(fdf):
     
     # boomStatic
     # '=(0.00012207*(boomStaticRaw-1638))*1000
+    if "boomStaticRaw" in available_cols:
+        eq = "(0.00012207*(fdf['boomStaticRaw']-1638))*1000"
+        ExCol.column_def["boomStatic"]["equation"] = eq_strip(eq)
+        fdf["boomStatic"] = eval(eq)
+        available_cols.append("boomStatic")
 
     # boomDynamic
     # '=0.01525902*(boomDynamicRaw-1638)-100
+    if "boomDynamicRaw" in available_cols:
+        eq = "0.01525902*(fdf['boomDynamicRaw']-1638)-100"
+        ExCol.column_def["boomDynamic"]["equation"] = eq_strip(eq)
+        fdf["boomDynamic"] = eval(eq)
+        available_cols.append("boomDynamic")
 
     # boomAlpha - Boom alpha in degrees
     if ("boomAlphaRaw" in available_cols):
         # =0.00000000000070918*V5^4-0.000000011698*V5^3+0.000070109*V5^2-0.21624*V5+310.21
-        fdf["boomAlpha"] = 0.00000000000070918 * np.power(fdf["boomAlphaRaw"], 4) - \
-                           0.000000011698      * np.power(fdf["boomAlphaRaw"], 3) + \
-                           0.000070109         * np.power(fdf["boomAlphaRaw"], 2) - \
-                           0.21624             *          fdf["boomAlphaRaw"]     + \
-                           310.21
+        eq = "0.000000011698      * np.power(fdf['boomAlphaRaw'], 3) + " \
+             "0.000070109         * np.power(fdf['boomAlphaRaw'], 2) - " \
+             "0.21624             *          fdf['boomAlphaRaw']     + " \
+             "310.21"
+        ExCol.column_def["boomAlpha"]["equation"] = eq_strip(eq)
+        fdf["boomAlpha"] = eval(eq)
+        # fdf["boomAlpha"] = 0.00000000000070918 * np.power(fdf["boomAlphaRaw"], 4) - \
+        #                    0.000000011698      * np.power(fdf["boomAlphaRaw"], 3) + \
+        #                    0.000070109         * np.power(fdf["boomAlphaRaw"], 2) - \
+        #                    0.21624             *          fdf["boomAlphaRaw"]     + \
+        #                    310.21
         available_cols.append("boomAlpha")
 
     # boomBeta

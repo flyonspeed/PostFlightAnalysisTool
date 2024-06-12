@@ -30,10 +30,12 @@ def to_excel(dataframe_groups, output_filename):
     # Make list of columns to output and headers to use
     col_output_list = []
     col_header_list = []
-    col_data_defs   = ExCol.column_def[1:]
-    for col_fmt in col_data_defs:
-        col_output_list.append(col_fmt["df_name"])
-        col_header_list.append(col_fmt["col_text"])
+    # col_data_defs   = ExCol.column_def[1:]
+    col_data_defs   = ExCol.column_def
+    col_data_defs.popitem(last=False)
+    for col_fmt_key in col_data_defs:
+        col_output_list.append(col_data_defs[col_fmt_key]["df_name"])
+        col_header_list.append(col_data_defs[col_fmt_key]["col_text"])
 
     # Get reference to XlsxWriter object
     writer = pd.ExcelWriter(output_filename)
@@ -87,56 +89,65 @@ def to_excel(dataframe_groups, output_filename):
         dm_sheet = writer.sheets[worksheet]
 
         # Add default top row formats
-        cell_format = writer.book.add_format()
-        cell_format.set_bold()
-        cell_format.set_text_wrap()
-        cell_format.set_align('top')
-        cell_format.set_align('center')
-        dm_sheet.set_row(4, None, cell_format)
+        sec_title_format = writer.book.add_format()
+        sec_title_format.set_bold()
+
+        hdr_row_format = writer.book.add_format()
+        hdr_row_format.set_bold()
+        hdr_row_format.set_text_wrap()
+        hdr_row_format.set_align('top')
+        hdr_row_format.set_align('center')
+        dm_sheet.set_row(4, None, hdr_row_format)
 
         # Format each column header
-        for col_idx in range(len(ExCol.column_def)):
+        col_idx = 1
+        for col_fmt_key in ExCol.column_def:
 
             ### Header row stuff
 
             # Setup header cell format 
-            cell_format = writer.book.add_format()
-            cell_format.set_bold()
-            cell_format.set_text_wrap()
-            cell_format.set_align('top')
-            cell_format.set_align('center')
+            hdr_cell_format = writer.book.add_format()
+            hdr_cell_format.set_bold()
+            hdr_cell_format.set_text_wrap()
+            hdr_cell_format.set_align('top')
+            hdr_cell_format.set_align('center')
 
             # Add color
-            if ExCol.column_def[col_idx]["col_color"] != "":
-                cell_format.set_bg_color(ExCol.column_def[col_idx]["col_color"])
+            if ExCol.column_def[col_fmt_key]["col_color"] != "":
+                hdr_cell_format.set_bg_color(ExCol.column_def[col_fmt_key]["col_color"])
 
             # Add border
-            if ExCol.column_def[col_idx]["border"] == True:
-                cell_format.set_right(2)
+            if ExCol.column_def[col_fmt_key]["border"] == True:
+                hdr_cell_format.set_right(2)
 
             # Write cell text and format
-            dm_sheet.write_string(3, col_idx, ExCol.column_def[col_idx]["df_name"])
-            dm_sheet.write_string(4, col_idx, ExCol.column_def[col_idx]["col_text"], cell_format)
+            if ExCol.column_def[col_fmt_key]["sec_title"] != "":
+                dm_sheet.write_string(0, col_idx, ExCol.column_def[col_fmt_key]["sec_title"], sec_title_format)
+            dm_sheet.write_string(3, col_idx, ExCol.column_def[col_fmt_key]["df_name"])
+            dm_sheet.write_string(4, col_idx, ExCol.column_def[col_fmt_key]["col_text"], hdr_cell_format)
 
             # Write cell comment
-            if ExCol.column_def[col_idx]["comment"] != "":
-                dm_sheet.write_comment(4, col_idx, ExCol.column_def[col_idx]["comment"], {'font_size': 12, 'width' : 300})
+            if ExCol.column_def[col_fmt_key]["equation"] != "":
+                dm_sheet.write_comment(3, col_idx, "= "+ExCol.column_def[col_fmt_key]["equation"], {'font_size': 12, 'width' : 400})
+            if ExCol.column_def[col_fmt_key]["comment"] != "":
+                dm_sheet.write_comment(4, col_idx, ExCol.column_def[col_fmt_key]["comment"], {'font_size': 12, 'width' : 300})
 
             ### Column stuff
             col_format = writer.book.add_format()
 
             # Hide columns
-            if ExCol.column_def[col_idx]["col_hide"] == True:
+            if ExCol.column_def[col_fmt_key]["col_hide"] == True:
                 col_options = {'hidden':True}
             else:
                 col_options = {}
 
             # Add column border
-            if ExCol.column_def[col_idx]["border"] == True:
+            if ExCol.column_def[col_fmt_key]["border"] == True:
                 col_format.set_right(2)
 
             dm_sheet.set_column(col_idx, col_idx, 12, col_format, col_options)
 
+            col_idx += 1
 
 
         # Freeze the top row
