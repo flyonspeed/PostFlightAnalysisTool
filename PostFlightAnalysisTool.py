@@ -46,7 +46,7 @@ kml_dataframe    = None
 
 # Both "plot_center_sec" and "plot_span_sec" are in seconds
 
-def plot_Pfwd(plot_center_sec, plot_span_sec):
+def plot_Pfwd(plot_center_sec, plot_span_sec, plot_type=1):
     
     # print("  Get plot data ...")
 
@@ -62,31 +62,52 @@ def plot_Pfwd(plot_center_sec, plot_span_sec):
         plot_end = len(merge_dataframe) - 1
 
     ts          = pd.Series(merge_dataframe.iloc[plot_start:plot_end].index).div(1000)
-    #DynonPfwdSm = merge_dataframe.iloc[plot_start:plot_end]["Pfwd"]
-    #AlSysPfwdSm = merge_dataframe.iloc[plot_start:plot_end]["docsPfwd"]
+    #DynonPfwdSm = merge_dataframe.iloc[plot_start:plot_end]["PFwd"]
+    #AlSysPfwdSm = merge_dataframe.iloc[plot_start:plot_end]["docsPFwd"]
 
     # Pfwd
-    if False:
-        DynonPData = merge_dataframe.iloc[plot_start:plot_end]["PfwdSmoothed"]
-        AlSysPData = merge_dataframe.iloc[plot_start:plot_end]["docsPfwdSmoothed"]
-        AlSysPfwdSmDer = AlSysPData.mul(1.15).add(50)
-        DynonLabel = "PfwdSmoothed"
-        AlSysLabel = "docsPfwdSmoothed Shifted"
-    # P45 / Pfwd
-    else:
-        DynonPData    = merge_dataframe.iloc[plot_start:plot_end]["P45Smoothed"]     / merge_dataframe.iloc[plot_start:plot_end]["PfwdSmoothed"]
-        AlSysPDataDer = merge_dataframe.iloc[plot_start:plot_end]["docsP45Smoothed"] / merge_dataframe.iloc[plot_start:plot_end]["docsPfwdSmoothed"]
-        FileNum       = merge_dataframe.iloc[plot_start:plot_end]["docsFileNum"] / 10.0
-        DynonLabel = "P45 / Pfwd"
-        AlSysLabel = "docsP45 / docsPfwd Shifted"
+    if plot_type == 0 :
+        DynonPData = merge_dataframe.iloc[plot_start:plot_end]["PFwdSmoothed"]
+        AlSysPData = merge_dataframe.iloc[plot_start:plot_end]["secPFwdSmoothed"]
+        AlSysPFwdSmDer = AlSysPData.mul(1.15).add(50)
+        DynonLabel = "priPFwdSmoothed"
+        AlSysLabel = "secPFwdSmoothed Shifted"
+    # P45 / PFwd
+    elif plot_type == 1 :
+        DynonPData    = merge_dataframe.iloc[plot_start:plot_end]["priP45Smoothed"] / merge_dataframe.iloc[plot_start:plot_end]["priPFwdSmoothed"]
+        AlSysPDataDer = merge_dataframe.iloc[plot_start:plot_end]["secP45Smoothed"] / merge_dataframe.iloc[plot_start:plot_end]["secPFwdSmoothed"]
+        FileNum       = merge_dataframe.iloc[plot_start:plot_end]["secFileNum"] / 10.0
+        DynonLabel = "priP45 / priPFwd"
+        AlSysLabel = "secP45 / secPFwd Shifted"
+    # Test plot types
+    elif plot_type == 101 :
+        Data1 = merge_dataframe.iloc[plot_start:plot_end]["priPFwd"] / 6553.0
+        Data2 = merge_dataframe.iloc[plot_start:plot_end]["priPFwdSmoothed"] / 6553.0
+        Data3 = merge_dataframe.iloc[plot_start:plot_end]["priPFwdSmthW"] / 6553.0
+        DataLabel1 = "priPFwd"
+        DataLabel2 = "priPFwdSmoothed"
+        DataLabel3 = "priPFwdSmthW"
+    elif plot_type == 102 :
+        Data1 = merge_dataframe.iloc[plot_start:plot_end]["priPStatic"] / 6553.0
+        Data2 = merge_dataframe.iloc[plot_start:plot_end]["secPStatic"] / 6553.0
+        Data3 = merge_dataframe.iloc[plot_start:plot_end]["priPStaticSmth"] / 6553.0
+        DataLabel1 = "priPStatic"
+        DataLabel2 = "secPStatic"
+        DataLabel3 = "priPStaticSmth"
+
     
     #fig = plt.figure(figsize=(15.0, 15.0), dpi=300)
     fig = plt.figure(dpi=300)
     ax = fig.add_subplot(1, 1, 1)
     ax.set_ylim(-2.0, 2.0)
-    ax.plot(ts, DynonPData,    color='tab:blue',   label=DynonLabel, linewidth=1.0)
-    ax.plot(ts, AlSysPDataDer, color='tab:orange', label=AlSysLabel, linewidth=1.0)
-    ax.plot(ts, FileNum,       color='tab:gray',   label="File Num", linewidth=0.5)
+    if plot_type < 100 :
+        ax.plot(ts, DynonPData,    color='tab:blue',   label=DynonLabel, linewidth=1.0)
+        ax.plot(ts, AlSysPDataDer, color='tab:orange', label=AlSysLabel, linewidth=1.0)
+        ax.plot(ts, FileNum,       color='tab:gray',   label="File Num", linewidth=0.5)
+    else :
+        ax.plot(ts, Data1, color='tab:blue',   label=DataLabel1, linewidth=1.0)
+        ax.plot(ts, Data2, color='tab:red',    label=DataLabel2, linewidth=1.0)
+        ax.plot(ts, Data3, color='tab:orange', label=DataLabel3, linewidth=1.0)
     plt.xlabel("Seconds since Midnight")
     plt.grid(True)
     plt.legend(framealpha=1.0)
@@ -101,7 +122,7 @@ def plot_Pfwd(plot_center_sec, plot_span_sec):
 
 def write_csv(flt_dataframe, output_filename):
     # Get rid of unwanted data
-    flt_dataframe.drop("docsFileNum", axis=1, inplace=True)
+    flt_dataframe.drop("secFileNum", axis=1, inplace=True)
     
     flt_dataframe.to_csv(output_filename, index_label="msecSinceMidnite")
     print("Write CSV done")
@@ -113,7 +134,7 @@ def write_csv(flt_dataframe, output_filename):
 def data_marks(dataframe):
 
     # Group the data by data mark
-    datamark_groups = dataframe.groupby("DataMark")
+    datamark_groups = dataframe.groupby("priDataMark")
 
     # Make a numerically sorted list of data mark keys    
     dg_ikeys = []
@@ -129,7 +150,7 @@ def data_marks(dataframe):
 def datamark_dataframe(dataframe, datamark_num):
 
     # Group the data by data mark
-    datamark_groups = dataframe.groupby("DataMark")
+    datamark_groups = dataframe.groupby("priDataMark")
 
     first_line = datamark_groups.groups[datamark_num][0]
     last_line  = datamark_groups.groups[datamark_num][-1]
@@ -143,7 +164,7 @@ def datamark_dataframe(dataframe, datamark_num):
 def slice_data(dataframe):
 
     # Group the data by data mark
-    datamark_groups = dataframe.groupby("DataMark")
+    datamark_groups = dataframe.groupby("priDataMark")
 
     # Make a numerically sorted list of data mark keys    
     dg_ikeys = []
@@ -167,7 +188,7 @@ def write_excel(flt_dataframe, output_filename):
     # https://xlsxwriter.readthedocs.io/
 
     # Get rid of unwanted data
-    flt_dataframe.drop("docsFileNum", axis=1, inplace=True)
+    flt_dataframe.drop("secFileNum", axis=1, inplace=True)
     
     # Write the individual datamark Excel tabs
     merge_dataframe_groups = slice_data(flt_dataframe)
@@ -303,7 +324,7 @@ if __name__=='__main__':
     file_timestamp       = datetime.datetime.now().strftime("%Y%m%dT%H%M%S")
     
     # Google drive data
-    if True :
+    if False :
         if True :
             # Vac RV-4 data
             test_data_dir          = "G:/.shortcut-targets-by-id/1JEHdf2zPb_F1R0v-s94Ia2RZNGjPCk2n/Flight Test Data/RV-4 Data/2024-01-01/"
@@ -335,17 +356,17 @@ if __name__=='__main__':
 
     # Local test data
     else :
-        test_data_dir          = "C:/Users/bob/OneDrive/Documents/sandbox/FlyONSPEED/Flight Test Data/RV-4/2022-05-10 Data/"
-        v2_data_filenames      = (test_data_dir + "10 May 22 V2 Data/log_2.csv")
+        test_data_dir          = "C:/Users/bob/OneDrive/Documents/sandbox/FlyONSPEED/Flight Test Data/RV-4/2024-05-07/"
+        v2_data_filenames      = (test_data_dir + "7 May 24 Cockpit Data/log_2.csv")
         docs_data_filenames    = ( \
-                                  (test_data_dir + "10 May 22 Docs Data/log_3.csv", 0.0), \
-                                  (test_data_dir + "10 May 22 Docs Data/log_4.csv", 0.0), \
-                                  (test_data_dir + "10 May 22 Docs Data/log_5.csv", 0.0), \
+                                  (test_data_dir + "7 May 24 Docs Data/log_3-3.csv", -1.5), \
+                                  (test_data_dir + "7 May 24 Docs Data/log_4.csv",   -1.5), \
+                                  (test_data_dir + "7 May 24 Docs Data/log_5.csv",   -1.5), \
                                   )
         efis_data_filename     = ""
         garmin_data_filename   = "" # test_data_dir + "log_20220602_172202_KTEW.csv"
         kml_data_filename      = ""
-        output_filename_root   = test_data_dir + output_dir + "2022-05-10"
+        output_filename_root   = test_data_dir + output_dir + "2024-05-07"
         efis_time_correction   = 0.0
         garmin_time_correction = 0.0
 
@@ -453,5 +474,19 @@ if __name__=='__main__':
             test_plot_center = int((merge_dataframe.index[-1] + merge_dataframe.index[0]) / (2 * 1000))
             test_plot_span   = int((merge_dataframe.index[-1] - merge_dataframe.index[0]) / 1000)
             plot_Pfwd(test_plot_center, test_plot_span)
+
+        # Test plot
+        if (input == '1'):
+            u.print_log("Data Time Span {0} to {1}".format(merge_dataframe.index[0], merge_dataframe.index[-1]))
+            print("Plot ...")
+            test_plot_center = int((merge_dataframe.index[-1] + merge_dataframe.index[0]) / (2 * 1000))
+            test_plot_span   = int((merge_dataframe.index[-1] - merge_dataframe.index[0]) / 1000)
+            plot_Pfwd(test_plot_center, test_plot_span, 101)
+        if (input == '2'):
+            u.print_log("Data Time Span {0} to {1}".format(merge_dataframe.index[0], merge_dataframe.index[-1]))
+            print("Plot ...")
+            test_plot_center = int((merge_dataframe.index[-1] + merge_dataframe.index[0]) / (2 * 1000))
+            test_plot_span   = int((merge_dataframe.index[-1] - merge_dataframe.index[0]) / 1000)
+            plot_Pfwd(test_plot_center, test_plot_span, 102)
 
     print("Done!")

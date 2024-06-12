@@ -21,16 +21,33 @@ class Docs_File():
     # Used to remap CSV data file labels into something more friendly for analysis
     label_remap = \
         {
-        'timeStamp':            'docsTimeStamp',
-        'Pfwd':                 'docsPfwd',
-        'PfwdSmoothed':         'docsPfwdSmoothed',
-        'P45':                  'docsP45',
-        'P45Smoothed':          'docsP45Smoothed',
-        'PStatic':              'docsPStatic',
-        'Palt':                 'docsPalt',
-        'IAS':                  'docsIAS',
-        'AngleofAttack':        'docsAngleofAttack',
-        'flapsPos':             'docsFlapsPos'
+        'timeStamp':            'secTimeStamp',
+        'Pfwd':                 'secPFwd',
+        'PfwdSmoothed':         'secPFwdSmoothed',
+        'P45':                  'secP45',
+        'P45Smoothed':          'secP45Smoothed',
+        'PStatic':              'secPStatic',
+        'Palt':                 'secPAlt',
+        'IAS':                  'secIAS',
+        'AngleofAttack':        'secAngleOfAttack',
+        'flapsPos':             'secFlapsPos',
+        'DataMark':             'secDataMark',
+        'OAT':                  'secOAT',
+        'TAS':                  'secTAS',
+        'imuTemp':              'secIMUTemp',
+        'VerticalG':            'secVerticalG',
+        'LateralG':             'secLateralG',
+        'ForwardG':             'secForwardG',
+        'RollRate':             'secRollRate',
+        'PitchRate':            'secPitchRate',
+        'YawRate':              'secYawRate',
+        'Pitch':                'secPitch',
+        'Roll':                 'secRoll',
+        'EarthVerticalG':       'secEarthVerticalG',
+        'FlightPath':           'secFlightPath',
+        'VSI':                  'secVSI',
+        'Altitude':             'secAltitude',
+        'efisPalt':             'efisPAlt',
         }
 
     def __init__(self, filename):
@@ -57,11 +74,13 @@ class Docs_File():
         for label_idx in range(0, len(labels)):
             try:
                 # Remap labels
-#                labels[label_idx] = self.label_remap[labels[label_idx]]
-                # If a label doesn't start with "efis" then it gets a "docs" stuck on the front
                 labels[label_idx] = labels[label_idx].strip()
-                if labels[label_idx][:4] != "efis":
-                    labels[label_idx] = "docs" + labels[label_idx][0].upper() + labels[label_idx][1:]
+                labels[label_idx] = self.label_remap[labels[label_idx]]
+
+                # If a label doesn't start with "efis" then it gets a "docs" stuck on the front
+                # labels[label_idx] = labels[label_idx].strip()
+                # if labels[label_idx][:4] != "efis":
+                #     labels[label_idx] = "docs" + labels[label_idx][0].upper() + labels[label_idx][1:]
 
             # Catch any remapping errors
             except KeyError as e:
@@ -141,7 +160,7 @@ def make_dataframe(doc_filenames):
                     continue
 
                 # Add the file number
-                doc_row["docsFileNum"] = doc_file_num
+                doc_row["secFileNum"] = doc_file_num
 
                 # We got to here so store the data                
                 doc_data_array.append(doc_row)
@@ -156,8 +175,8 @@ def make_dataframe(doc_filenames):
 
         # Check the goodness of the timeStamp
         #num_rows = len(doc_data_array)
-        #timestamp_span = int(doc_data_array[len(doc_data_array)-1]["docsTimeStamp"]) - \
-        #                 int(doc_data_array[0]                    ["docsTimeStamp"])
+        #timestamp_span = int(doc_data_array[len(doc_data_array)-1]["secTimeStamp"]) - \
+        #                 int(doc_data_array[0]                    ["secTimeStamp"])
         #if num_rows != (timestamp_span / 20) + 1:
         #    print("Warning - non-continuous timestamps")
 
@@ -173,7 +192,7 @@ def make_dataframe(doc_filenames):
             if int(utc_seconds_ref) != int(utc_seconds):
                 break
         
-        mid_timestamp  = int(doc_data_array[middle_index]["docsTimeStamp"])
+        mid_timestamp  = int(doc_data_array[middle_index]["secTimeStamp"])
         mid_time_utc   = Utils.make_utc_from_str(mid_time_string)
 
         # Make a UTC Time value to use as an index
@@ -186,7 +205,7 @@ def make_dataframe(doc_filenames):
                     raise ValueError("Bad efisTime")
             
                 # Make values for the data timestamp and UTC time
-                data_timestamp = int(doc_data_array[array_idx]["docsTimeStamp"])
+                data_timestamp = int(doc_data_array[array_idx]["secTimeStamp"])
             
                 # Calculate and store a time index value which is milliseconds since midnight
                 data_time_utc  = mid_time_utc + (data_timestamp - mid_timestamp)
@@ -227,7 +246,7 @@ def convert_doc_row(doc_row):
         for doc_key in doc_row.keys():
             if   doc_key == "efisTime":
                 pass
-            elif doc_key == "docsTimeStamp" or \
+            elif doc_key == "secTimeStamp" or \
                  doc_key == "efisAge":
                 doc_row[doc_key] = int(doc_row[doc_key])
             else:
