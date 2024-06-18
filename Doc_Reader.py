@@ -84,7 +84,7 @@ class Docs_File():
 
             # Catch any remapping errors
             except KeyError as e:
-                print("Docs label remap error - {} - {}".format(label_idx, labels[label_idx]))
+#                print("Docs label remap error - {} - {}".format(label_idx, labels[label_idx]))
                 pass
 
         # Now put it back together into a CSV string

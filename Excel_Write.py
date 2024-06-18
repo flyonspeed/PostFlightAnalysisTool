@@ -71,8 +71,8 @@ def to_excel(dataframe_groups, output_filename):
                         index_label="msecSinceMidnite", startrow=5)
 
         curr_group_idx += 1
-        if curr_group_idx == 2:
-            break;
+        # if curr_group_idx == 2:
+        #     break;
 
     # Do some worksheet formatting
     # ----------------------------
@@ -128,7 +128,7 @@ def to_excel(dataframe_groups, output_filename):
 
             # Write cell comment
             if ExCol.column_def[col_fmt_key]["equation"] != "":
-                dm_sheet.write_comment(3, col_idx, "= "+ExCol.column_def[col_fmt_key]["equation"], {'font_size': 12, 'width' : 400})
+                dm_sheet.write_comment(3, col_idx, "= "+ExCol.column_def[col_fmt_key]["equation"], {'font_size': 12, 'width' : 500})
             if ExCol.column_def[col_fmt_key]["comment"] != "":
                 dm_sheet.write_comment(4, col_idx, ExCol.column_def[col_fmt_key]["comment"], {'font_size': 12, 'width' : 300})
 
@@ -145,13 +145,16 @@ def to_excel(dataframe_groups, output_filename):
             if ExCol.column_def[col_fmt_key]["border"] == True:
                 col_format.set_right(2)
 
+            if ExCol.column_def[col_fmt_key]["num_format"] != "":
+                col_format.set_num_format(ExCol.column_def[col_fmt_key]["num_format"])
+
             dm_sheet.set_column(col_idx, col_idx, 12, col_format, col_options)
 
             col_idx += 1
 
 
         # Freeze the top row
-        dm_sheet.freeze_panes(1,0)
+        dm_sheet.freeze_panes(5,0)
 
 
     writer.close()
@@ -171,7 +174,7 @@ if __name__=='__main__':
           "priP45"           : 1000,
           "priPalt"          : 4000,
           "priIAS"           : 150,
-          "priAngleofAttack" : 3,
+          "priAngleOfAttack" : 3,
           "priDataMark"      : 0,
           "priTAS"           : "=I2*(1+(H2/1000*0.017))"}, 
         { "priTimeStamp"     : 10020,
@@ -179,7 +182,7 @@ if __name__=='__main__':
           "priP45"           : 1000,
           "priPalt"          : 4010,
           "priIAS"           : 160,
-          "priAngleofAttack" : 3.1,
+          "priAngleOfAttack" : 3.1,
           "priDataMark"      : 0,
           "priTAS"           : "=I2*(1+(H2/1000*0.017))" }, 
         { "priTimeStamp"     : 10040,
@@ -187,7 +190,7 @@ if __name__=='__main__':
           "priP45"           : 1000,
           "priPalt"          : 4100,
           "priIAS"           : 155,
-          "priAngleofAttack" : 3,
+          "priAngleOfAttack" : 3,
           "priDataMark"      : 1,
           "priTAS"           : "=I2*(1+(H2/1000*0.017))" }, 
         { "priTimeStamp"     : 10060,
@@ -195,7 +198,7 @@ if __name__=='__main__':
           "priP45"           : 1000,
           "priPalt"          : 4110,
           "priIAS"           : 165,
-          "priAngleofAttack" : 3,
+          "priAngleOfAttack" : 3,
           "priDataMark"      : 1,
           "priTAS"           : "=I2*(1+(H2/1000*0.017))" }, 
         ]            
