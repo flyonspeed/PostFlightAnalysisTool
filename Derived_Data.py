@@ -205,6 +205,8 @@ def add_derived_cols(fdf):
     # is not unreasonable. But where he came up with the original math is a mystery
     # to me. I'll attempt to unjack it.
 
+    # FIX THESE EQUATIONS SO THEY MAKES SENSE
+
     # secPFwdSmthPSI
     # OLD '=0.0002*(secPFwdSmthW+8192)-1.25+(secPStatic*0.0145038)-(priPStatic*0.0145038)
     # NEW '=(secPFwdSmthW/6553.0)+(secPStatic-priPStatic)*0.0145038
@@ -815,9 +817,9 @@ def add_derived_cols(fdf):
         eq_corr_1 = "-(0.1264*(-fdf['vnAccelVert']/9.80655-1))"
         eq_corr_2 = "+( 3.08 * (fdf['vnAngularRatePitch']* 57.2958) / (fdf['priTAS']*1.68781))"
         eq_corr_3 = "+(10.19 * (fdf['vnAngularRateRoll'] * 57.2958) / (fdf['priTAS']*1.68781))"
-        eq_1 = "0.7917 * fdf['boomAlpha'] + 1.2758" + eq_corr_1 + eq_corr_2 + eq_corr_3
-        eq_2 = "0.7979 * fdf['boomAlpha'] + 1.6647" + eq_corr_1 + eq_corr_2 + eq_corr_3
-        eq_3 = "0.7863 * fdf['boomAlpha'] + 1.7172" + eq_corr_1 + eq_corr_2 + eq_corr_3
+        eq_1 = "0.7917 * fdf['boomAlpha'] - 1.2758" + eq_corr_1 + eq_corr_2 + eq_corr_3
+        eq_2 = "0.7979 * fdf['boomAlpha'] - 1.6647" + eq_corr_1 + eq_corr_2 + eq_corr_3
+        eq_3 = "0.7863 * fdf['boomAlpha'] - 1.7172" + eq_corr_1 + eq_corr_2 + eq_corr_3
         
         ExCol.column_def["boomAlphaCor"]["equation"] = eq_strip("'Flaps 0'  "  + eq_1 + " + Corrections \n" + 
                                                                 "'Flaps 20'  " + eq_2 + " + Corrections \n" + 
