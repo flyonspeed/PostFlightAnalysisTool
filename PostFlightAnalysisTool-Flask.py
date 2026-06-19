@@ -1,4 +1,7 @@
-# This Python file uses the following encoding: utf-8
+# Flask web interface for the PostFlightAnalysisTool
+# https://flask.palletsprojects.com/en/2.1.x/
+# https://jinja.palletsprojects.com/en/3.1.x/templates/
+
 import os
 import sys
 import io
@@ -6,7 +9,8 @@ import datetime
 
 from pathlib import Path
 
-from flask import Flask    
+from flask import Flask
+from flask import render_template
    
 import PostFlightAnalysisTool as pfat
 #import Merge_Plot as mp
@@ -16,9 +20,7 @@ app = Flask(__name__)   # Flask constructor
   
 @app.route('/')      
 def hello():
-    return  \
-'<label for="myfile">Select a file:</label>' \
-'<input type="file" id="myfile" name="myfile">'
+    return render_template('main_form.html')
 
 # -----------------------------------------------------------------------------
 # Main program

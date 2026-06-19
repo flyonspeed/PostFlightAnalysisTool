@@ -6,11 +6,12 @@ Created on Wed Sep  8 14:19:13 2021
 """
 
 import sys
+import os
 
 import csv
 import datetime
-import pandas as pd
 
+import pandas as pd
 import Utils
 
 # -----------------------------------------------------------------------------
@@ -23,36 +24,62 @@ class V2_File():
     # Used to remap CSV data file labels into something more friendly for analysis
     label_remap = \
         {
-        'Pitch_1':          'Pitch',
-        'Roll_1':           'Roll',
+        # 'Pitch_1':          'Pitch',                # May not need
+        # 'Roll_1':           'Roll',                 # May not need
+        'timeStamp':        'priTimeStamp',
+        'Pfwd':             'priPFwd',
+        'PfwdSmoothed':     'priPFwdSmoothed',
+        'P45':              'priP45',
+        'P45Smoothed':      'priP45Smoothed',
+        'PStatic':          'priPStatic',
+        'Palt':             'priPAlt',
+        'IAS':              'priIAS',
+        'AngleofAttack':    'priAngleOfAttack',
+        'flapsPos':         'priFlapsPos',
+        'DataMark':         'priDataMark',
+        'OAT':              'priOAT',
+        'TAS':              'priTAS',
+        'imuTemp':          'priIMUTemp',
+        'VerticalG':        'priVerticalG',
+        'LateralG':         'priLateralG',
+        'ForwardG':         'priForwardG',
+        'RollRate':         'priRollRate',
+        'PitchRate':        'priPitchRate',
+        'YawRate':          'priYawRate',
+        'Pitch':            'priPitch',
+        'Roll':             'priRoll',
+        'EarthVerticalG':   'priEarthVerticalG',
+        'FlightPath':       'priFlightPath',
+        'VSI':              'priVSI',
+        'Altitude':         'priAltitude',
         'boomStatic':       'boomStaticRaw',
         'boomDynamic':      'boomDynamicRaw',
         'boomAlpha':        'boomAlphaRaw',
         'boomBeta':         'boomBetaRaw',
-        'AngularRateRoll':  'vnAngularRateRoll',
-        'AngularRatePitch': 'vnAngularRatePitch',
-        'AngularRateYaw':   'vnAngularRateYaw',
-        'VelNedNorth':      'vnVelNedNorth',
-        'VelNedEast':       'vnVelNedEast',
-        'VelNedDown':       'vnVelNedDown',
-        'AccelFwd':         'vnAccelFwd',
-        'AccelLat':         'vnAccelLat',
-        'AccelVert':        'vnAccelVert',
-        'Yaw':              'vnYaw',
-        'Pitch_2':          'vnPitch',
-        'Roll_2':           'vnRoll',
-        'LinAccFwd':        'vnLinAccFwd',
-        'LinAccLat':        'vnLinAccLat',
-        'LinAccVert':       'vnLinAccVert',
-        'YawSigma':         'vnYawSigma',
-        'RollSigma':        'vnRollSigma',
-        'PitchSigma':       'vnPitchSigma',
-        'GnssVelNedNorth':  'vnGnssVelNedNorth',
-        'GnssVelNedEast':   'vnGnssVelNedEast',
-        'GnssVelNedDown':   'vnGnssVelNedDown',
-        'GPSFix':           'vnGPSFix',
-        'TimeUTC':          'vnTimeUTC',
-        ' TimeUTC':         'vnTimeUTC'
+        # 'AngularRateRoll':  'vnAngularRateRoll',    # May not need
+        # 'AngularRatePitch': 'vnAngularRatePitch',   # May not need
+        # 'AngularRateYaw':   'vnAngularRateYaw',     # May not need
+        # 'VelNedNorth':      'vnVelNedNorth',        # May not need
+        # 'VelNedEast':       'vnVelNedEast',         # May not need
+        # 'VelNedDown':       'vnVelNedDown',         # May not need
+        # 'AccelFwd':         'vnAccelFwd',           # May not need
+        # 'AccelLat':         'vnAccelLat',           # May not need
+        # 'AccelVert':        'vnAccelVert',          # May not need
+        # 'Yaw':              'vnYaw',                # May not need
+        # 'Pitch_2':          'vnPitch',              # May not need
+        # 'Roll_2':           'vnRoll',               # May not need
+        # 'LinAccFwd':        'vnLinAccFwd',          # May not need
+        # 'LinAccLat':        'vnLinAccLat',          # May not need
+        # 'LinAccVert':       'vnLinAccVert',         # May not need
+        # 'YawSigma':         'vnYawSigma',           # May not need
+        # 'RollSigma':        'vnRollSigma',          # May not need
+        # 'PitchSigma':       'vnPitchSigma',         # May not need
+        # 'GnssVelNedNorth':  'vnGnssVelNedNorth',    # May not need
+        # 'GnssVelNedEast':   'vnGnssVelNedEast',     # May not need
+        # 'GnssVelNedDown':   'vnGnssVelNedDown',     # May not need
+        # 'GPSFix':           'vnGPSFix',             # May not need
+        # 'TimeUTC':          'vnTimeUTC',            # May not need
+        # ' TimeUTC':         'vnTimeUTC'             # May not need
          }
 
     def __init__(self, filename):
@@ -76,18 +103,8 @@ class V2_File():
         labels = csv_line.split(",")
         
         # Original set of labels
-        pitch_num = 1
-        roll_num  = 1
         for label_idx in range(0, len(labels)):
             try:
-                # "Pitch" and "Roll" can appear twice so it needs to be handled specially
-                if labels[label_idx] == "Pitch":
-                    labels[label_idx] = "Pitch_{}".format(pitch_num)
-                    pitch_num += 1
-                if labels[label_idx] == "Roll":
-                    labels[label_idx] = "Roll_{}".format(roll_num)
-                    roll_num += 1
-
                 # Remap labels
                 labels[label_idx] = labels[label_idx].strip()
                 labels[label_idx] = self.label_remap[labels[label_idx]]
@@ -110,6 +127,8 @@ class V2_File():
 
 def make_dataframe(v2_filenames):
 
+    past_convert_error = False
+
     # A couple of lists to accumulate data
     v2_data_array_master = []
     index_time_master    = []
@@ -120,10 +139,8 @@ def make_dataframe(v2_filenames):
     if isinstance(v2_filenames, str):
         v2_filenames_list = [v2_filenames,]
 
-    # Fixup for datamarks
-    datamark_offset = 0
-
-    for file_idx in range(len(v2_filenames_list)):
+    num_v2_files = len(v2_filenames_list)
+    for file_idx in range(num_v2_files):
 
         # Get the current file name and time correction
         v2_filename    = v2_filenames_list[file_idx]
@@ -142,9 +159,15 @@ def make_dataframe(v2_filenames):
                 
                 # Convert strings to numbers
                 if convert_v2_row(v2_row) == False:
-                    print("Format error in {}, line {}".format(v2_filename, v2_reader.line_num))
+                    if past_convert_error == False:
+                        print("Format error in {} starting line {}".format(os.path.basename(v2_filename), v2_reader.line_num))
+                    past_convert_error = True
                     continue
-                
+                else:
+                    if past_convert_error == True:
+                        print("Format error in {} endinging line {}".format(os.path.basename(v2_filename), v2_reader.line_num))
+                    past_convert_error = False
+
                 # Try getting rid of the cycle timer part
                 try:
                     (time_trimmed, cycle_counter) = v2_row["vnTimeUTC"].split(".")
@@ -157,14 +180,14 @@ def make_dataframe(v2_filenames):
                     continue
 
                 # Fixup datamark
-                v2_row["DataMark"] += datamark_offset
+                # v2_row["DataMark"] += datamark_offset
 
                 # We got to here so store the data                
                 v2_data_array.append(v2_row)
 
         # Catch any other read errors
         except csv.Error as e:
-            sys.exit('file {}, line {}: {}'.format(v2_filename, v2_reader.line_num, e))
+            sys.exit('file {}, line {}: {}'.format(os.path.basename(v2_filename), v2_reader.line_num, e))
 
         # Make a time index value for each row
         # ------------------------------------
@@ -188,7 +211,7 @@ def make_dataframe(v2_filenames):
             if int(utc_seconds_ref) != int(utc_seconds):
                 break
         
-        mid_timestamp  = int(v2_data_array[middle_index]["timeStamp"])
+        mid_timestamp  = int(v2_data_array[middle_index]["priTimeStamp"])
         mid_time_utc   = Utils.make_utc_from_str(mid_time_string)
 
         # Make a UTC Time value to use as an index
@@ -196,7 +219,7 @@ def make_dataframe(v2_filenames):
         index_time = []
         while array_idx < len(v2_data_array):
             # Make values for the data timestamp and UTC time
-            data_timestamp = int(v2_data_array[array_idx]["timeStamp"])
+            data_timestamp = int(v2_data_array[array_idx]["priTimeStamp"])
 
             # Calculate and store a time index value which is milliseconds since midnight
             # Align time stamps on 20 millisecond values
@@ -211,7 +234,7 @@ def make_dataframe(v2_filenames):
         index_time_master    += index_time
 
         # The last datamark value is the offset for the next file
-        datamark_offset = v2_row["DataMark"] + 1
+        #datamark_offset = v2_row["DataMark"] + 1
 
     # Make a pandas dataframe of flight test data
     # -------------------------------------------
@@ -229,22 +252,20 @@ def convert_v2_row(v2_row):
     success = True
     try:
         for v2_key in v2_row.keys():
-            if   v2_key == " TimeUTC"  or \
-                 v2_key == "TimeUTC"   or \
-                 v2_key == "vnTimeUTC":
+            if   v2_key == "vnTimeUTC":
                 pass
-            elif v2_key == "timeStamp" or \
-                 v2_key == "flapsPos"  or \
-                 v2_key == "DataMark"  or \
+            elif v2_key == "priTimeStamp" or \
+                 v2_key == "priFlapsPos"  or \
+                 v2_key == "priDataMark"  or \
                  v2_key == "boomAge"   or \
                  v2_key == "vnGPSFix"  or \
-                 v2_key == "DataAge":
+                 v2_key == "vnDataAge":
                 v2_row[v2_key] = int(v2_row[v2_key])
             else:
                 v2_row[v2_key] = float(v2_row[v2_key])
 
     except:
-        print("Error converting ")
+#        print("Error converting ")
         success = False
             
     return success

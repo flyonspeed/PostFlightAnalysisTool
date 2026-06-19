@@ -9,7 +9,7 @@ class AlphaBetaFilter:
     # Think of alpha as like filter bandwidth. If alpha = 1 then the bandwidth
     # of the filter is the same as the bandwidth of the data and there is no
     # filtering. Normally alpha is less than 1 so that the filter bandwidth is
-    # less than the data bandwidth. Many time 0.1 is a happy number.
+    # less than the data bandwidth. Many times 0.1 is a happy number.
     #
     # Think of beta as like dampening. An optimum beta value is calculated based
     # on the value of alpha. For more dampening then pass in beta scale factor > 1.0.

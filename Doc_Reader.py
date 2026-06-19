@@ -2,6 +2,7 @@
 """
 Created on Sat Sep  4 20:44:28 2021
 """
+import os
 
 import csv
 import datetime
@@ -20,16 +21,33 @@ class Docs_File():
     # Used to remap CSV data file labels into something more friendly for analysis
     label_remap = \
         {
-        'timeStamp':            'docsTimeStamp',
-        'Pfwd':                 'docsPfwd',
-        'PfwdSmoothed':         'docsPfwdSmoothed',
-        'P45':                  'docsP45',
-        'P45Smoothed':          'docsP45Smoothed',
-        'PStatic':              'docsPStatic',
-        'Palt':                 'docsPalt',
-        'IAS':                  'docsIAS',
-        'AngleofAttack':        'docsAngleofAttack',
-        'flapsPos':             'docsFlapsPos'
+        'timeStamp':            'secTimeStamp',
+        'Pfwd':                 'secPFwd',
+        'PfwdSmoothed':         'secPFwdSmoothed',
+        'P45':                  'secP45',
+        'P45Smoothed':          'secP45Smoothed',
+        'PStatic':              'secPStatic',
+        'Palt':                 'secPAlt',
+        'IAS':                  'secIAS',
+        'AngleofAttack':        'secAngleOfAttack',
+        'flapsPos':             'secFlapsPos',
+        'DataMark':             'secDataMark',
+        'OAT':                  'secOAT',
+        'TAS':                  'secTAS',
+        'imuTemp':              'secIMUTemp',
+        'VerticalG':            'secVerticalG',
+        'LateralG':             'secLateralG',
+        'ForwardG':             'secForwardG',
+        'RollRate':             'secRollRate',
+        'PitchRate':            'secPitchRate',
+        'YawRate':              'secYawRate',
+        'Pitch':                'secPitch',
+        'Roll':                 'secRoll',
+        'EarthVerticalG':       'secEarthVerticalG',
+        'FlightPath':           'secFlightPath',
+        'VSI':                  'secVSI',
+        'Altitude':             'secAltitude',
+        'efisPalt':             'efisPAlt',
         }
 
     def __init__(self, filename):
@@ -56,15 +74,17 @@ class Docs_File():
         for label_idx in range(0, len(labels)):
             try:
                 # Remap labels
-#                labels[label_idx] = self.label_remap[labels[label_idx]]
-                # If a label doesn't start with "efis" then it gets a "docs" stuck on the front
                 labels[label_idx] = labels[label_idx].strip()
-                if labels[label_idx][:4] != "efis":
-                    labels[label_idx] = "docs" + labels[label_idx][0].upper() + labels[label_idx][1:]
+                labels[label_idx] = self.label_remap[labels[label_idx]]
+
+                # If a label doesn't start with "efis" then it gets a "docs" stuck on the front
+                # labels[label_idx] = labels[label_idx].strip()
+                # if labels[label_idx][:4] != "efis":
+                #     labels[label_idx] = "docs" + labels[label_idx][0].upper() + labels[label_idx][1:]
 
             # Catch any remapping errors
             except KeyError as e:
-                print("Docs label remap error - {} - {}".format(label_idx, labels[label_idx]))
+#                print("Docs label remap error - {} - {}".format(label_idx, labels[label_idx]))
                 pass
 
         # Now put it back together into a CSV string
@@ -77,7 +97,7 @@ class Docs_File():
 # Utility routines for reading and parsing Docs data files
 # ---------------------------------------------------------------------------
 
-def make_dataframe(doc_filenames, time_corrections):
+def make_dataframe(doc_filenames):
     
     # Note: time correction is in seconds
 
@@ -86,21 +106,21 @@ def make_dataframe(doc_filenames, time_corrections):
     index_time_master     = []
 
     # Make sure these passed parameters are lists
-    if isinstance(doc_filenames, tuple):
-        doc_filenames_list = list(doc_filenames)
-    if isinstance(doc_filenames, str):
-        doc_filenames_list = [doc_filenames,]
+    #if isinstance(doc_filenames, tuple):
+    doc_filenames_list = list(doc_filenames)
+    #if isinstance(doc_filenames, str):
+    #    doc_filenames_list = [doc_filenames,]
 
-    if isinstance(time_corrections, tuple):
-        time_corrections_list = list(time_corrections)
-    if isinstance(time_corrections, int) or isinstance(time_corrections, float):
-        time_corrections_list = [time_corrections,]
+    #if isinstance(time_corrections, tuple):
+    #    time_corrections_list = list(time_corrections)
+    #if isinstance(time_corrections, int) or isinstance(time_corrections, float):
+    #    time_corrections_list = [time_corrections,]
 
+    doc_file_num = 1
     for file_idx in range(len(doc_filenames_list)):
 
         # Get the current file name and time correction
-        doc_filename    = doc_filenames_list[file_idx]
-        time_correction = time_corrections_list[file_idx]
+        (doc_filename, time_correction) = doc_filenames_list[file_idx]
 
         # Read the CSV file
         # -----------------
@@ -116,7 +136,7 @@ def make_dataframe(doc_filenames, time_corrections):
 
                 # Convert strings to numbers
                 if convert_doc_row(doc_row) == False:
-                    print("Format error in {}, line {}".format(doc_filename, doc_reader.line_num))
+                    print("Format error in {}, line {}".format(os.path.basename(doc_filename), doc_reader.line_num))
                     continue
                         
                 # Do some data fixes, OK if it throws an excepton
@@ -139,12 +159,15 @@ def make_dataframe(doc_filenames, time_corrections):
                 except:
                     continue
 
+                # Add the file number
+                doc_row["secFileNum"] = doc_file_num
+
                 # We got to here so store the data                
                 doc_data_array.append(doc_row)
 
         # Catch any other read errors
         except csv.Error as e:
-            sys.exit('file {}, line {}: {}'.format(doc_filename, doc_reader.line_num, e))
+            sys.exit('file {}, line {}: {}'.format(os.path.basename(doc_filename), doc_reader.line_num, e))
 
 
         # Make a time index value for each row
@@ -152,8 +175,8 @@ def make_dataframe(doc_filenames, time_corrections):
 
         # Check the goodness of the timeStamp
         #num_rows = len(doc_data_array)
-        #timestamp_span = int(doc_data_array[len(doc_data_array)-1]["docsTimeStamp"]) - \
-        #                 int(doc_data_array[0]                    ["docsTimeStamp"])
+        #timestamp_span = int(doc_data_array[len(doc_data_array)-1]["secTimeStamp"]) - \
+        #                 int(doc_data_array[0]                    ["secTimeStamp"])
         #if num_rows != (timestamp_span / 20) + 1:
         #    print("Warning - non-continuous timestamps")
 
@@ -169,7 +192,7 @@ def make_dataframe(doc_filenames, time_corrections):
             if int(utc_seconds_ref) != int(utc_seconds):
                 break
         
-        mid_timestamp  = int(doc_data_array[middle_index]["docsTimeStamp"])
+        mid_timestamp  = int(doc_data_array[middle_index]["secTimeStamp"])
         mid_time_utc   = Utils.make_utc_from_str(mid_time_string)
 
         # Make a UTC Time value to use as an index
@@ -182,7 +205,7 @@ def make_dataframe(doc_filenames, time_corrections):
                     raise ValueError("Bad efisTime")
             
                 # Make values for the data timestamp and UTC time
-                data_timestamp = int(doc_data_array[array_idx]["docsTimeStamp"])
+                data_timestamp = int(doc_data_array[array_idx]["secTimeStamp"])
             
                 # Calculate and store a time index value which is milliseconds since midnight
                 data_time_utc  = mid_time_utc + (data_timestamp - mid_timestamp)
@@ -195,10 +218,13 @@ def make_dataframe(doc_filenames, time_corrections):
             except Exception as error:
                 print("Error '" + repr(error) + "' at line " + str(array_idx))
                 doc_data_array.pop(array_idx)
-        
+
+        doc_file_num += 1
+
         # Append the new data to the end of the master data arrays
         doc_data_array_master += doc_data_array
         index_time_master     += index_time
+
 
     # Add data to a pandas dataframe of flight test data
     # ---------------------------------------------------
@@ -220,7 +246,7 @@ def convert_doc_row(doc_row):
         for doc_key in doc_row.keys():
             if   doc_key == "efisTime":
                 pass
-            elif doc_key == "docsTimeStamp" or \
+            elif doc_key == "secTimeStamp" or \
                  doc_key == "efisAge":
                 doc_row[doc_key] = int(doc_row[doc_key])
             else:

@@ -47,3 +47,10 @@ def make_utc_from_str(utc_str):
    
     return -1
 
+
+def set_logger(new_print_log):
+    print_log = new_print_log
+
+
+print_log = print
+
